@@ -15,6 +15,7 @@ export interface Task {
   type: TaskType;
   sensoryType?: SensoryType;
   details?: string;
+  curiosity?: string; // New field for fun facts
   completed: boolean;
   evidence?: Evidence;
 }

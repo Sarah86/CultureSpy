@@ -161,9 +161,9 @@ const TRANSLATIONS: Record<Language, any> = {
     error_gps: 'ERREUR_GPS'
   },
   PT: {
-    selectCipher: 'SELECIONAR CIFRA DE COMUNICAÇÃO',
-    identityReq: 'IDENTIDADE SECRETA NECESSÁRIA',
-    enterCodename: 'INSERIR_CODENOME',
+    selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
+    identityReq: 'IDENTIDADE SECRETA REQUERIDA',
+    enterCodename: 'DIGITAR_CODENOME',
     confirmIdentity: 'CONFIRMAR IDENTIDADE',
     welcome: 'BEM-VINDO',
     selectRank: 'SELECIONAR PATENTE DE TREINO',
@@ -181,30 +181,30 @@ const TRANSLATIONS: Record<Language, any> = {
     targetsLocked: 'Alvos Localizados!',
     pickZone: 'Escolha uma zona, Agente',
     abortScan: 'ABORTAR_SCAN',
-    retreat: 'RETROCEDER_AO_QG',
+    retreat: 'VOLTAR_PARA_O_QG',
     missionClear: 'MISSÃO CONCLUÍDA!',
     intelCaptured: 'Dados Capturados',
-    secured: 'PROTEGIDO',
+    secured: 'EM SEGURANÇA',
     settingsTitle: 'Configurações',
     rank: 'Patente do Agente',
     satelliteLink: 'Link de Satélite',
     satelliteDesc: 'Verifique sua conexão com a rede CultureSpy.',
     updateKey: 'Atualizar Chave Secreta',
-    terminateIdentity: 'Terminar_Identidade',
-    cipherSelect: 'CIFRA_DE_COMM',
+    terminateIdentity: 'Apagar_Identidade',
+    cipherSelect: 'CÓDIGO_COMM',
     proceed: 'PROSSEGUIR',
-    uplinkRequired: 'Uplink Necessário',
+    uplinkRequired: 'Conexão Necessária',
     noMissions: 'Nenhuma Missão Ativa',
-    topSecret: 'TOP_SECRET',
+    topSecret: 'CONFIDENCIAL',
     lvl: 'Nível',
     microTasks: 'MICRO_TAREFAS',
     infiltrate: 'Infiltrar',
-    dataCached: 'DADOS_CACHED',
+    dataCached: 'DADOS_EM_CACHE',
     activeOp: 'OP_ATIVA',
     status_scanning: 'DISPARANDO_LASERS',
     status_searching: 'BUSCANDO_AVENTURA',
     status_connecting: 'CAPTURANDO_ONDAS',
-    status_encrypting: 'CRIPTOGRAFANDO_MISSAO',
+    status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
     error_gps: 'FALHA_LINK_GPS'
   }
@@ -299,7 +299,6 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       setScanStatus(t.status_connecting);
 
-      // Tentar obter localização para contexto, mas não travar se falhar
       let latLng = undefined;
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -312,10 +311,10 @@ const App: React.FC = () => {
 
       const prompt = `
         Search context: "${query}"
-        Language: ${lang}
+        Language: ${lang === 'PT' ? 'Português do Brasil' : lang}
         TASK: Use Google Maps tool to find 4 specific cultural, historical, or interesting landmarks related to "${query}".
         IMPORTANT: Return ONLY a raw JSON array of objects.
-        Structure: [{"name": "Landmark Name in ${lang}", "type": "Museum/Park/etc in ${lang}", "description": "Short intriguing 1-sentence teaser in ${lang}"}]
+        Structure: [{"name": "Landmark Name", "type": "Category", "description": "Short intriguing teaser"}]
       `;
 
       try {
@@ -382,10 +381,10 @@ const App: React.FC = () => {
 
       const prompt = `
         LOCATION: Lat ${latitude}, Lng ${longitude}
-        LANGUAGE: ${lang}
+        LANGUAGE: ${lang === 'PT' ? 'Português do Brasil' : lang}
         TASK: Find 4 super interesting places nearby (museums, funny statues, colorful walls, weird buildings).
-        IMPORTANT: All values in the response MUST be in ${lang}.
-        FORMAT: Return a JSON array: [{"name": "Name in ${lang}", "type": "Type in ${lang}", "description": "Description in ${lang}"}]
+        IMPORTANT: All values in the response MUST be in the target language.
+        FORMAT: Return a JSON array: [{"name": "Name", "type": "Type", "description": "Description"}]
       `;
 
       try {
@@ -431,9 +430,10 @@ const App: React.FC = () => {
         TARGET: ${target.name}
         AGENT_NAME: ${agentName}
         AGENT_AGE: ${agentAge}
-        LANGUAGE: ${lang}
+        LANGUAGE: ${lang === 'PT' ? 'Português do Brasil' : lang}
         TASK: Create 10 sensory tasks for ${target.name} (sight, sound, touch).
-        IMPORTANT: All text content MUST be in ${lang}.
+        IMPORTANT: Each task must include a 'curiosity' (a mind-blowing fact or secret about that specific observation).
+        IMPORTANT: All text content MUST be in the target language.
       `;
 
       const response = await ai.models.generateContent({
@@ -453,10 +453,11 @@ const App: React.FC = () => {
                   type: Type.OBJECT,
                   properties: {
                     prompt: { type: Type.STRING },
+                    curiosity: { type: Type.STRING, description: "A funny/interesting secret fact related to the task." },
                     sensoryType: { type: Type.STRING, enum: ['sight', 'sound', 'touch', 'smell', 'vibe'] },
                     type: { type: Type.STRING, enum: ['observation', 'deduction', 'sketch', 'audio'] }
                   },
-                  required: ["prompt", "sensoryType", "type"]
+                  required: ["prompt", "curiosity", "sensoryType", "type"]
                 }
               }
             },
@@ -647,7 +648,7 @@ const App: React.FC = () => {
                     <div className="w-full border-t border-white/10"></div>
                   </div>
                   <div className="relative flex justify-center text-xs uppercase tracking-[0.4em] font-black">
-                    <span className="bg-[#0b1b2b] px-4 text-white/20">OR</span>
+                    <span className="bg-[#0b1b2b] px-4 text-white/20">OU</span>
                   </div>
                 </div>
 
