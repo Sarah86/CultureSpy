@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send } from 'lucide-react';
+// Fixed the incorrect 'eye' import to 'Eye'
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language } from './types';
@@ -18,6 +19,9 @@ interface NearbyTarget {
 const TRANSLATIONS: Record<Language, any> = {
   EN: {
     selectCipher: 'SELECT COMMUNICATION CIPHER',
+    briefingTitle: 'MISSION_BRIEFING',
+    briefingText: 'CultureSpy is your elite intelligence tool. Your mission: Infiltrate museums, galleries, and cities. Use your senses to detect cultural glitches, collect data, and unlock historical secrets hidden in plain sight.',
+    startInfiltration: 'START_INFILTRATION',
     identityReq: 'SECRET IDENTITY REQUIRED',
     enterCodename: 'ENTER_CODENAME',
     confirmIdentity: 'CONFIRM IDENTITY',
@@ -66,6 +70,9 @@ const TRANSLATIONS: Record<Language, any> = {
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
+    briefingTitle: 'BRIEFING_MISSIONE',
+    briefingText: 'CultureSpy è il tuo strumento d\'élite. La tua missione: infiltrarti in musei, gallerie e città. Usa i tuoi sensi per rilevare glitch culturali, raccogliere dati e sbloccare segreti storici nascosti.',
+    startInfiltration: 'INIZIA_INFILTRAZIONE',
     identityReq: 'IDENTITÀ SEGRETA RICHIESTA',
     enterCodename: 'INSERISCI_CODENAME',
     confirmIdentity: 'CONFERMA IDENTITÀ',
@@ -114,6 +121,9 @@ const TRANSLATIONS: Record<Language, any> = {
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
+    briefingTitle: 'BRIEFING_DE_MISSION',
+    briefingText: 'CultureSpy est votre outil de renseignement d\'élite. Votre mission : infiltrez les musées et les villes. Utilisez vos sens pour détecter les anomalies culturelles et débloquer des secrets historiques.',
+    startInfiltration: 'LANCER_INFILTRATION',
     identityReq: 'IDENTITÉ SECRÈTE REQUISE',
     enterCodename: 'NOM_DE_CODE',
     confirmIdentity: 'CONFIRMER IDENTITÉ',
@@ -162,6 +172,9 @@ const TRANSLATIONS: Record<Language, any> = {
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
+    briefingTitle: 'BRIEFING_DA_MISSÃO',
+    briefingText: 'O CultureSpy é sua ferramenta de inteligência de elite. Sua missão: infiltrar-se em museus e centros culturais. Use seus sentidos para detectar falhas no sistema, coletar dados sensoriais e desbloquear segredos históricos escondidos por toda a cidade.',
+    startInfiltration: 'INICIAR_INFILTRAÇÃO',
     identityReq: 'IDENTIDADE SECRETA REQUERIDA',
     enterCodename: 'DIGITAR_CODENOME',
     confirmIdentity: 'CONFIRMAR IDENTIDADE',
@@ -194,7 +207,7 @@ const TRANSLATIONS: Record<Language, any> = {
     cipherSelect: 'CÓDIGO_COMM',
     proceed: 'PROSSEGUIR',
     uplinkRequired: 'Conexão Necessária',
-    noMissions: 'Nenhuma Missão Ativa',
+    noMissions: 'Nenhuma Missão Ativa Found',
     topSecret: 'CONFIDENCIAL',
     lvl: 'Nível',
     microTasks: 'MICRO_TAREFAS',
@@ -217,7 +230,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>('ONBOARDING');
   const [agentName, setAgentName] = useState('');
   const [tempName, setTempName] = useState('');
-  const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'NAME' | 'AGE'>('LANG');
+  const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'INTRO' | 'NAME' | 'AGE'>('LANG');
   const [agentAge, setAgentAge] = useState<number | null>(null);
   const [manualSearchInput, setManualSearchInput] = useState('');
   
@@ -296,6 +309,7 @@ const App: React.FC = () => {
     setDetectedTargets([]);
 
     try {
+      // Create a new GoogleGenAI instance right before making an API call to use latest key
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       setScanStatus(t.status_connecting);
 
@@ -376,6 +390,7 @@ const App: React.FC = () => {
       const { latitude, longitude } = position.coords;
       setUserCoords({ lat: latitude, lng: longitude });
 
+      // Create a new GoogleGenAI instance right before making an API call to use latest key
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       setScanStatus(t.status_connecting);
 
@@ -425,6 +440,7 @@ const App: React.FC = () => {
     setScanStatus(t.status_encrypting);
 
     try {
+      // Create a new GoogleGenAI instance right before making an API call to use latest key
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `
         TARGET: ${target.name}
@@ -571,7 +587,7 @@ const App: React.FC = () => {
                   {(['EN', 'IT', 'FR', 'PT'] as Language[]).map(l => (
                     <button
                       key={l}
-                      onClick={() => { setLang(l); setOnboardingStep('NAME'); }}
+                      onClick={() => { setLang(l); setOnboardingStep('INTRO'); }}
                       className="group relative p-8 rounded-[30px] border-4 border-white/5 bg-spySlate hover:border-spyPink hover:scale-[1.05] transition-all overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-spyPink/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -580,6 +596,31 @@ const App: React.FC = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+            ) : onboardingStep === 'INTRO' ? (
+              <div className="w-full px-4 animate-in slide-in-from-right-10 flex flex-col h-full items-center justify-center">
+                <div className="w-32 h-32 bg-spyAmber/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyAmber shadow-[0_0_40px_rgba(255,176,0,0.3)] relative overflow-hidden group">
+                  <Shield size={64} className="text-spyAmber relative z-10 group-hover:scale-110 transition-transform" />
+                  <div className="absolute inset-0 bg-spyAmber/10 animate-ping"></div>
+                </div>
+                <div className="bg-spySlate/50 border-4 border-white/5 rounded-[40px] p-8 mb-10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10"><Info size={40} /></div>
+                  <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-6 leading-none border-b-2 border-spyAmber pb-4 inline-block">{t.briefingTitle}</h2>
+                  <p className="text-sm font-bold text-white/80 leading-relaxed uppercase tracking-wider mb-2">
+                    <TerminalText text={t.briefingText} delay={20} />
+                  </p>
+                  <div className="mt-6 flex gap-2">
+                     <div className="w-2 h-2 rounded-full bg-spyAmber animate-pulse"></div>
+                     <div className="w-2 h-2 rounded-full bg-spyAmber/50 animate-pulse delay-75"></div>
+                     <div className="w-2 h-2 rounded-full bg-spyAmber/20 animate-pulse delay-150"></div>
+                  </div>
+                </div>
+                <button onClick={() => setOnboardingStep('NAME')} className="w-full bg-spyAmber text-black font-black py-6 rounded-3xl shadow-[0_8px_0_#b37b00] active:translate-y-2 active:shadow-none transition-all text-xl uppercase tracking-widest flex items-center justify-center gap-3">
+                   {t.startInfiltration} <ChevronRight />
+                </button>
+                <button type="button" onClick={() => setOnboardingStep('LANG')} className="mt-8 text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                  <ChevronLeft size={14}/> BACK_TO_CIPHER
+                </button>
               </div>
             ) : onboardingStep === 'NAME' ? (
               <div className="w-full px-4 animate-in slide-in-from-right-10">
@@ -590,8 +631,8 @@ const App: React.FC = () => {
                 <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('AGE'); } }} className="space-y-6">
                   <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest" autoFocus />
                   <button disabled={!tempName.trim()} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl">{t.confirmIdentity}</button>
-                  <button type="button" onClick={() => setOnboardingStep('LANG')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
-                    <ChevronLeft size={14}/> BACK_TO_CIPHER_SELECT
+                  <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                    <ChevronLeft size={14}/> BACK_TO_BRIEFING
                   </button>
                 </form>
               </div>
