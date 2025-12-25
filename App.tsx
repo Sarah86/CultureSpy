@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages } from 'lucide-react';
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language } from './types';
@@ -32,6 +32,8 @@ const TRANSLATIONS: Record<Language, any> = {
     radarTitle: 'The Fun Radar',
     radarDesc: 'Ready to find some wacky cultural glitches nearby,',
     scanSector: 'SCAN SECTOR',
+    manualSearch: 'MANUAL INFILTRATION',
+    searchPlaceholder: 'ENTER_PLACE_NAME...',
     targetsLocked: 'Targets Locked!',
     pickZone: 'Pick a zone, Agent',
     abortScan: 'ABORT_SCAN',
@@ -78,6 +80,8 @@ const TRANSLATIONS: Record<Language, any> = {
     radarTitle: 'Radar Divertimento',
     radarDesc: 'Pronto a trovare glitch culturali bizzarri,',
     scanSector: 'SCANSIONE SETTORE',
+    manualSearch: 'INFILTRAZIONE MANUALE',
+    searchPlaceholder: 'INSERISCI_NOME_LUOGO...',
     targetsLocked: 'Obiettivi Identificati!',
     pickZone: 'Scegli una zona, Agente',
     abortScan: 'ANNULLA_SCANSIONE',
@@ -124,6 +128,8 @@ const TRANSLATIONS: Record<Language, any> = {
     radarTitle: 'Radar de Plaisir',
     radarDesc: 'Prêt à débusquer des anomalies culturelles,',
     scanSector: 'SCANNER SECTEUR',
+    manualSearch: 'INFILTRATION MANUELLE',
+    searchPlaceholder: 'NOM_DU_LIEU...',
     targetsLocked: 'Cibles Verrouillées !',
     pickZone: 'Choisis une zone, Agent',
     abortScan: 'ANNULER_SCAN',
@@ -170,6 +176,8 @@ const TRANSLATIONS: Record<Language, any> = {
     radarTitle: 'Radar de Diversão',
     radarDesc: 'Pronto para encontrar falhas culturais por perto,',
     scanSector: 'ESCANEAR SETOR',
+    manualSearch: 'INFILTRAÇÃO MANUAL',
+    searchPlaceholder: 'NOME_DO_LUGAR...',
     targetsLocked: 'Alvos Localizados!',
     pickZone: 'Escolha uma zona, Agente',
     abortScan: 'ABORTAR_SCAN',
@@ -211,6 +219,7 @@ const App: React.FC = () => {
   const [tempName, setTempName] = useState('');
   const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'NAME' | 'AGE'>('LANG');
   const [agentAge, setAgentAge] = useState<number | null>(null);
+  const [manualSearchInput, setManualSearchInput] = useState('');
   
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('');
@@ -247,7 +256,6 @@ const App: React.FC = () => {
         await window.aistudio.openSelectKey();
         setShowKeySelection(false);
         setHasValidKey(true); 
-        handleScanSurroundings();
       } catch (e) {}
     }
   };
@@ -255,7 +263,6 @@ const App: React.FC = () => {
   const handleManualBypass = () => {
     setShowKeySelection(false);
     setHasValidKey(true);
-    handleScanSurroundings();
   };
 
   const toggleTask = (missionId: string, taskId: string) => {
@@ -273,6 +280,83 @@ const App: React.FC = () => {
       }
       return m;
     }));
+  };
+
+  const handleSearchByName = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const query = manualSearchInput.trim();
+    if (!query || isScanning) return;
+
+    setIsScanning(true);
+    setScanError(undefined);
+    setScanStatus(t.status_searching);
+    setDetectedTargets([]);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      setScanStatus(t.status_connecting);
+
+      // Tentar obter localização para contexto, mas não travar se falhar
+      let latLng = undefined;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+        });
+        latLng = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      } catch(e) {
+        console.warn("Location context unavailable for manual search.");
+      }
+
+      const prompt = `
+        Search context: "${query}"
+        Language: ${lang}
+        TASK: Use Google Maps tool to find 4 specific cultural, historical, or interesting landmarks related to "${query}".
+        IMPORTANT: Return ONLY a raw JSON array of objects.
+        Structure: [{"name": "Landmark Name in ${lang}", "type": "Museum/Park/etc in ${lang}", "description": "Short intriguing 1-sentence teaser in ${lang}"}]
+      `;
+
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            tools: [{ googleMaps: {} }],
+            toolConfig: {
+              retrievalConfig: { latLng }
+            }
+          }
+        });
+
+        const text = response.text;
+        const jsonMatch = text?.match(/\[[\s\S]*\]/);
+        
+        if (jsonMatch) {
+          const targets = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(targets) && targets.length > 0) {
+            setDetectedTargets(targets);
+            setView('SELECT_LOCATION');
+            setIsScanning(false);
+            setManualSearchInput(''); 
+          } else {
+            throw new Error(t.error_radar);
+          }
+        } else {
+          throw new Error(t.error_radar);
+        }
+      } catch (err: any) {
+        if (err.message?.includes("Requested entity was not found.") || err.message?.includes("404")) {
+          setShowKeySelection(true);
+          setHasValidKey(false);
+          throw new Error(t.uplinkRequired);
+        }
+        throw err;
+      }
+    } catch (err: any) {
+      setScanError(err.message || "SEARCH_FAILURE: MAPS_UPLINK_DENIED");
+    }
   };
 
   const handleScanSurroundings = async () => {
@@ -336,7 +420,7 @@ const App: React.FC = () => {
   };
 
   const handleSelectTarget = async (target: NearbyTarget) => {
-    if (!userCoords || !agentAge) return;
+    if (!agentAge) return;
     setIsScanning(true);
     setScanError(undefined);
     setScanStatus(t.status_encrypting);
@@ -425,7 +509,12 @@ const App: React.FC = () => {
         isScanning={isScanning} 
         statusText={scanStatus} 
         error={scanError} 
-        onRetry={() => hasValidKey ? handleScanSurroundings() : handleOpenKeySelector()}
+        onRetry={() => {
+          setIsScanning(false);
+          setScanError(undefined);
+          if (manualSearchInput.trim()) handleSearchByName();
+          else handleScanSurroundings();
+        }}
         onClose={() => { setIsScanning(false); setScanError(undefined); }}
       />
 
@@ -515,20 +604,16 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-2 gap-5 w-full px-2 pb-10">
                   {[6, 7, 8, 9, 10, 11, 12].map((age) => {
                     const rank = getRankInfo(age);
-                    const borderColorClass = rank.color === 'spyGreen' ? 'border-spyGreen/40' : rank.color === 'spyCyan' ? 'border-spyCyan/40' : 'border-spyPink/40';
-                    const activeColorClass = rank.color === 'spyGreen' ? 'hover:bg-spyGreen hover:border-spyGreen' : rank.color === 'spyCyan' ? 'hover:bg-spyCyan hover:border-spyCyan' : 'hover:bg-spyPink hover:border-spyPink';
-                    const textColorClass = rank.color === 'spyGreen' ? 'text-spyGreen' : rank.color === 'spyCyan' ? 'text-spyCyan' : 'text-spyPink';
-                    
                     return (
                       <button 
                         key={age} 
                         onClick={() => { setAgentAge(age); setView('HOME'); }} 
-                        className={`p-6 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center group relative overflow-hidden bg-spySlate/50 ${borderColorClass} ${activeColorClass} hover:text-black`}
+                        className="p-6 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center group relative overflow-hidden bg-spySlate/50 border-white/10 hover:border-spyCyan hover:bg-spyCyan hover:text-black"
                       >
                         <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
                         <div className="flex flex-col items-center gap-0.5">
                           <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
-                          <span className={`text-[11px] font-black uppercase tracking-widest ${textColorClass} group-hover:text-black mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
+                          <span className={`text-[11px] font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
                             {rank.name}
                           </span>
                         </div>
@@ -551,10 +636,43 @@ const App: React.FC = () => {
                 <h2 className="text-sm font-black tracking-widest uppercase italic">{t.radarTitle}</h2>
               </div>
               <p className="text-lg text-white font-black mb-8 leading-tight">{t.radarDesc} <span className="text-spyCyan">{agentName}</span>?</p>
-              <button onClick={handleScanSurroundings} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl flex items-center justify-center gap-4 shadow-[0_8px_0_#00a6af] hover:shadow-[0_4px_0_#00a6af] hover:translate-y-[4px] active:translate-y-2 active:shadow-none transition-all group text-lg uppercase">
-                <Radar size={28} className="group-hover:rotate-180 transition-transform duration-1000" /> {t.scanSector}
-              </button>
+              
+              <div className="space-y-4">
+                <button onClick={handleScanSurroundings} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl flex items-center justify-center gap-4 shadow-[0_8px_0_#00a6af] hover:shadow-[0_4px_0_#00a6af] hover:translate-y-[4px] active:translate-y-2 active:shadow-none transition-all group text-lg uppercase">
+                  <Radar size={28} className="group-hover:rotate-180 transition-transform duration-1000" /> {t.scanSector}
+                </button>
+
+                <div className="relative pt-4">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-white/10"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase tracking-[0.4em] font-black">
+                    <span className="bg-[#0b1b2b] px-4 text-white/20">OR</span>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSearchByName} className="mt-4 flex gap-3 relative z-10">
+                  <div className="relative flex-1 group">
+                    <input 
+                      type="text" 
+                      value={manualSearchInput}
+                      onChange={(e) => setManualSearchInput(e.target.value)}
+                      placeholder={t.searchPlaceholder}
+                      className="w-full bg-black/40 border-4 border-white/5 rounded-3xl py-4 pl-12 pr-6 font-black text-spyCyan uppercase tracking-widest placeholder:text-white/10 focus:border-spyCyan/50 focus:outline-none transition-all text-sm"
+                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-spyCyan transition-colors" size={20} />
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={!manualSearchInput.trim() || isScanning}
+                    className="bg-spySlate border-4 border-white/5 p-4 rounded-3xl text-spyCyan hover:border-spyCyan hover:scale-110 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale cursor-pointer"
+                  >
+                    <Send size={24} />
+                  </button>
+                </form>
+              </div>
             </div>
+            
             <div className="grid gap-6">
               {missions.length > 0 ? missions.map(m => (
                 <MissionCard key={m.id} mission={m} t={t} onSelect={(m) => { setActiveMissionId(m.id); setView('MISSION_DETAIL'); }} />
