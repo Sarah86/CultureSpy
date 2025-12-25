@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { MOCK_MISSIONS } from './data';
-import { Mission, Task, TaskType, SensoryType } from './types';
+import { getLocalizedMockMissions } from './data';
+import { Mission, Task, TaskType, SensoryType, Language } from './types';
 import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
 import TerminalText from './components/TerminalText';
@@ -15,23 +15,201 @@ interface NearbyTarget {
   description: string;
 }
 
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
+const TRANSLATIONS: Record<Language, any> = {
+  EN: {
+    selectCipher: 'SELECT COMMUNICATION CIPHER',
+    identityReq: 'SECRET IDENTITY REQUIRED',
+    enterCodename: 'ENTER_CODENAME',
+    confirmIdentity: 'CONFIRM IDENTITY',
+    welcome: 'WELCOME',
+    selectRank: 'SELECT TRAINING RANK',
+    yearsSuffix: 'YEARS',
+    rankRookie: 'RECRUIT',
+    rankSpecialist: 'AGENT',
+    rankElite: 'COMMANDER',
+    stealthOn: 'Stealth_On',
+    xp: 'XP',
+    radarTitle: 'The Fun Radar',
+    radarDesc: 'Ready to find some wacky cultural glitches nearby,',
+    scanSector: 'SCAN SECTOR',
+    targetsLocked: 'Targets Locked!',
+    pickZone: 'Pick a zone, Agent',
+    abortScan: 'ABORT_SCAN',
+    retreat: 'RETREAT_TO_HQ',
+    missionClear: 'MISSION_CLEAR!',
+    intelCaptured: 'Intel Captured',
+    secured: 'SECURED',
+    settingsTitle: 'Settings',
+    rank: 'Agent Rank',
+    satelliteLink: 'Satellite Link',
+    satelliteDesc: 'Verify your connection to the CultureSpy satellite network.',
+    updateKey: 'Update Key Selection',
+    terminateIdentity: 'Terminate_Identity',
+    cipherSelect: 'COMM_CIPHER',
+    proceed: 'PROCEED',
+    uplinkRequired: 'Uplink Required',
+    noMissions: 'No Active Missions Found',
+    topSecret: 'TOP_SECRET',
+    lvl: 'Lvl',
+    microTasks: 'MICRO_TASKS',
+    infiltrate: 'Infiltrate',
+    dataCached: 'DATA_CACHED',
+    activeOp: 'ACTIVE_OP',
+    status_scanning: 'FIRING_LASER_BEAMS',
+    status_searching: 'SNIFFING_FOR_ADVENTURE',
+    status_connecting: 'CATCHING_SECRET_WAVES',
+    status_encrypting: 'ENCRYPTING_MISSION_DATA',
+    error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
+    error_gps: 'GPS_LINK_FAILURE'
+  },
+  IT: {
+    selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
+    identityReq: 'IDENTITÀ SEGRETA RICHIESTA',
+    enterCodename: 'INSERISCI_CODENAME',
+    confirmIdentity: 'CONFERMA IDENTITÀ',
+    welcome: 'BENVENUTO',
+    selectRank: 'SELEZIONA GRADO ADDESTRAMENTO',
+    yearsSuffix: 'ANNI',
+    rankRookie: 'RECLUTA',
+    rankSpecialist: 'AGENTE',
+    rankElite: 'COMANDANTE',
+    stealthOn: 'Modalità_Invisibile',
+    xp: 'XP',
+    radarTitle: 'Radar Divertimento',
+    radarDesc: 'Pronto a trovare glitch culturali bizzarri,',
+    scanSector: 'SCANSIONE SETTORE',
+    targetsLocked: 'Obiettivi Identificati!',
+    pickZone: 'Scegli una zona, Agente',
+    abortScan: 'ANNULLA_SCANSIONE',
+    retreat: 'RITORNA_AL_QG',
+    missionClear: 'MISSIONE COMPIUTA!',
+    intelCaptured: 'Dati Acquisiti',
+    secured: 'MESSO AL SICURO',
+    settingsTitle: 'Impostazioni',
+    rank: 'Grado Agente',
+    satelliteLink: 'Collegamento Satellitare',
+    satelliteDesc: 'Verifica la tua connessione alla rete CultureSpy.',
+    updateKey: 'Aggiorna Chiave Segreta',
+    terminateIdentity: 'Termina_Identità',
+    cipherSelect: 'CIFRARIO_COMM',
+    proceed: 'PROCEDI',
+    uplinkRequired: 'Uplink Necessario',
+    noMissions: 'Nessuna Missione Attiva',
+    topSecret: 'TOP_SECRET',
+    lvl: 'Liv',
+    microTasks: 'MICRO_COMPITI',
+    infiltrate: 'Infiltrati',
+    dataCached: 'DATI_ARCHIVIATI',
+    activeOp: 'OP_ATTIVA',
+    status_scanning: 'ATTIVAZIONE_LASER',
+    status_searching: 'RICERCA_AVVENTURE',
+    status_connecting: 'SINTONIZZAZIONE_ONDE',
+    status_encrypting: 'CRITTOGRAFIA_MISSIONE',
+    error_radar: 'RADAR DISTURBATO: NO DATI',
+    error_gps: 'ERRORE_LINK_GPS'
+  },
+  FR: {
+    selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
+    identityReq: 'IDENTITÉ SECRÈTE REQUISE',
+    enterCodename: 'NOM_DE_CODE',
+    confirmIdentity: 'CONFIRMER IDENTITÉ',
+    welcome: 'BIENVENUE',
+    selectRank: 'SÉLECTIONNER RANG D\'ENTRAÎNEMENT',
+    yearsSuffix: 'ANS',
+    rankRookie: 'RECRUE',
+    rankSpecialist: 'AGENT',
+    rankElite: 'COMMANDANT',
+    stealthOn: 'Mode_Furtif',
+    xp: 'XP',
+    radarTitle: 'Radar de Plaisir',
+    radarDesc: 'Prêt à débusquer des anomalies culturelles,',
+    scanSector: 'SCANNER SECTEUR',
+    targetsLocked: 'Cibles Verrouillées !',
+    pickZone: 'Choisis une zone, Agent',
+    abortScan: 'ANNULER_SCAN',
+    retreat: 'RETOUR_AU_QG',
+    missionClear: 'MISSION RÉUSSIE !',
+    intelCaptured: 'Infos Capturées',
+    secured: 'SÉCURISÉ',
+    settingsTitle: 'Paramètres',
+    rank: 'Rang de l\'Agent',
+    satelliteLink: 'Liaison Satellite',
+    satelliteDesc: 'Vérifiez votre connexion au réseau CultureSpy.',
+    updateKey: 'Mettre à Jour la Clé',
+    terminateIdentity: 'Terminer_Identité',
+    cipherSelect: 'CHIFFREMENT_COMM',
+    proceed: 'CONTINUER',
+    uplinkRequired: 'Liaison Requise',
+    noMissions: 'Aucune Mission Trouvée',
+    topSecret: 'TOP_SECRET',
+    lvl: 'Niv',
+    microTasks: 'MICRO_TACHES',
+    infiltrate: 'Infiltrer',
+    dataCached: 'DONNEES_CACHEES',
+    activeOp: 'OP_ACTIVE',
+    status_scanning: 'LANCEMENT_DES_LASERS',
+    status_searching: 'RECHERCHE_AVENTURE',
+    status_connecting: 'SYNCHRO_SATELLITE',
+    status_encrypting: 'CHIFFREMENT_MISSION',
+    error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
+    error_gps: 'ERREUR_GPS'
+  },
+  PT: {
+    selectCipher: 'SELECIONAR CIFRA DE COMUNICAÇÃO',
+    identityReq: 'IDENTIDADE SECRETA NECESSÁRIA',
+    enterCodename: 'INSERIR_CODENOME',
+    confirmIdentity: 'CONFIRMAR IDENTIDADE',
+    welcome: 'BEM-VINDO',
+    selectRank: 'SELECIONAR PATENTE DE TREINO',
+    yearsSuffix: 'ANOS',
+    rankRookie: 'RECRUTA',
+    rankSpecialist: 'AGENTE',
+    rankElite: 'COMANDANTE',
+    stealthOn: 'Modo_Furtivo',
+    xp: 'XP',
+    radarTitle: 'Radar de Diversão',
+    radarDesc: 'Pronto para encontrar falhas culturais por perto,',
+    scanSector: 'ESCANEAR SETOR',
+    targetsLocked: 'Alvos Localizados!',
+    pickZone: 'Escolha uma zona, Agente',
+    abortScan: 'ABORTAR_SCAN',
+    retreat: 'RETROCEDER_AO_QG',
+    missionClear: 'MISSÃO CONCLUÍDA!',
+    intelCaptured: 'Dados Capturados',
+    secured: 'PROTEGIDO',
+    settingsTitle: 'Configurações',
+    rank: 'Patente do Agente',
+    satelliteLink: 'Link de Satélite',
+    satelliteDesc: 'Verifique sua conexão com a rede CultureSpy.',
+    updateKey: 'Atualizar Chave Secreta',
+    terminateIdentity: 'Terminar_Identidade',
+    cipherSelect: 'CIFRA_DE_COMM',
+    proceed: 'PROSSEGUIR',
+    uplinkRequired: 'Uplink Necessário',
+    noMissions: 'Nenhuma Missão Ativa',
+    topSecret: 'TOP_SECRET',
+    lvl: 'Nível',
+    microTasks: 'MICRO_TAREFAS',
+    infiltrate: 'Infiltrar',
+    dataCached: 'DADOS_CACHED',
+    activeOp: 'OP_ATIVA',
+    status_scanning: 'DISPARANDO_LASERS',
+    status_searching: 'BUSCANDO_AVENTURA',
+    status_connecting: 'CAPTURANDO_ONDAS',
+    status_encrypting: 'CRIPTOGRAFANDO_MISSAO',
+    error_radar: 'RADAR BLOQUEADO: SEM DADOS',
+    error_gps: 'FALHA_LINK_GPS'
   }
-  interface Window {
-    aistudio?: AIStudio;
-  }
-}
+};
 
 const App: React.FC = () => {
-  const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
+  const [lang, setLang] = useState<Language>('EN');
+  const [missions, setMissions] = useState<Mission[]>([]);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
-  const [view, setView] = useState<'AGE_SELECT' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>('AGE_SELECT');
+  const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>('ONBOARDING');
   const [agentName, setAgentName] = useState('');
   const [tempName, setTempName] = useState('');
-  const [onboardingStep, setOnboardingStep] = useState<'NAME' | 'AGE'>('NAME');
+  const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'NAME' | 'AGE'>('LANG');
   const [agentAge, setAgentAge] = useState<number | null>(null);
   
   const [isScanning, setIsScanning] = useState(false);
@@ -42,9 +220,12 @@ const App: React.FC = () => {
   const [showKeySelection, setShowKeySelection] = useState(false);
   const [hasValidKey, setHasValidKey] = useState(false);
 
+  const t = TRANSLATIONS[lang];
+
   useEffect(() => {
     checkKeyStatus();
-  }, []);
+    setMissions(getLocalizedMockMissions(lang));
+  }, [lang]);
 
   const checkKeyStatus = async () => {
     if (window.aistudio) {
@@ -54,7 +235,6 @@ const App: React.FC = () => {
         if (hasKey) setShowKeySelection(false);
         return hasKey;
       } catch (e) {
-        console.error("Key check failed", e);
         return false;
       }
     }
@@ -68,9 +248,7 @@ const App: React.FC = () => {
         setShowKeySelection(false);
         setHasValidKey(true); 
         handleScanSurroundings();
-      } catch (e) {
-        console.error("Failed to open key selector", e);
-      }
+      } catch (e) {}
     }
   };
 
@@ -83,10 +261,10 @@ const App: React.FC = () => {
   const toggleTask = (missionId: string, taskId: string) => {
     setMissions(prevMissions => prevMissions.map(m => {
       if (m.id === missionId) {
-        const newTasks = m.tasks.map(t => 
-          t.id === taskId ? { ...t, completed: !t.completed } : t
+        const newTasks = m.tasks.map(task => 
+          task.id === taskId ? { ...task, completed: !task.completed } : task
         );
-        const allDone = newTasks.every(t => t.completed);
+        const allDone = newTasks.every(task => task.completed);
         return { 
           ...m, 
           tasks: newTasks,
@@ -100,11 +278,11 @@ const App: React.FC = () => {
   const handleScanSurroundings = async () => {
     setIsScanning(true);
     setScanError(undefined);
-    setScanStatus('FIRING_LASER_BEAMS');
+    setScanStatus(t.status_scanning);
     setDetectedTargets([]);
 
     try {
-      setScanStatus('SNIFFING_FOR_ADVENTURE');
+      setScanStatus(t.status_searching);
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, { 
           enableHighAccuracy: true,
@@ -116,16 +294,17 @@ const App: React.FC = () => {
       setUserCoords({ lat: latitude, lng: longitude });
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      setScanStatus('CATCHING_THE_SECRET_WAVES');
+      setScanStatus(t.status_connecting);
 
       const prompt = `
         LOCATION: Lat ${latitude}, Lng ${longitude}
+        LANGUAGE: ${lang}
         TASK: Find 4 super interesting places nearby (museums, funny statues, colorful walls, weird buildings).
-        FORMAT: Return a JSON array: [{"name": "Funny Place", "type": "Type", "description": "10-word wacky teaser"}]
+        IMPORTANT: All values in the response MUST be in ${lang}.
+        FORMAT: Return a JSON array: [{"name": "Name in ${lang}", "type": "Type in ${lang}", "description": "Description in ${lang}"}]
       `;
 
       try {
-        // GUIDELINE: For Google Maps tool, model MUST be gemini-2.5-flash
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash",
           contents: prompt,
@@ -141,18 +320,18 @@ const App: React.FC = () => {
           setView('SELECT_LOCATION');
           setIsScanning(false);
         } else {
-          throw new Error("RADAR_JAMMED: NO_DATA_STREAM");
+          throw new Error(t.error_radar);
         }
       } catch (err: any) {
         if (err.message?.includes("Requested entity was not found.") || err.message?.includes("404")) {
           setShowKeySelection(true);
           setHasValidKey(false);
-          throw new Error("NEED_A_SECRET_KEY_MATE");
+          throw new Error(t.uplinkRequired);
         }
         throw err;
       }
     } catch (err: any) {
-      setScanError(err.message || 'GPS_LINK_FAILURE');
+      setScanError(err.message || t.error_gps);
     }
   };
 
@@ -160,7 +339,7 @@ const App: React.FC = () => {
     if (!userCoords || !agentAge) return;
     setIsScanning(true);
     setScanError(undefined);
-    setScanStatus(`ENCRYPTING MISSION DATA...`);
+    setScanStatus(t.status_encrypting);
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -168,11 +347,11 @@ const App: React.FC = () => {
         TARGET: ${target.name}
         AGENT_NAME: ${agentName}
         AGENT_AGE: ${agentAge}
-        TASK: Create 10 super fun tasks for ${target.name}. 
-        Tasks should mention ${agentName} and be sensory (sight, sound, touch).
+        LANGUAGE: ${lang}
+        TASK: Create 10 sensory tasks for ${target.name} (sight, sound, touch).
+        IMPORTANT: All text content MUST be in ${lang}.
       `;
 
-      // GUIDELINE: Use responseSchema to ensure the structure is exactly what we need
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
@@ -189,7 +368,7 @@ const App: React.FC = () => {
                 items: {
                   type: Type.OBJECT,
                   properties: {
-                    prompt: { type: Type.STRING, description: "The specific sensory action for the kid to do." },
+                    prompt: { type: Type.STRING },
                     sensoryType: { type: Type.STRING, enum: ['sight', 'sound', 'touch', 'smell', 'vibe'] },
                     type: { type: Type.STRING, enum: ['observation', 'deduction', 'sketch', 'audio'] }
                   },
@@ -209,9 +388,9 @@ const App: React.FC = () => {
         id: `gen-${Date.now()}`,
         status: 'PENDING',
         isLocked: false,
-        category: 'ART', // Defaulting category as the schema handles core data
-        tasks: (data.tasks || []).map((t: any, i: number) => ({ 
-          ...t, 
+        category: 'ART',
+        tasks: (data.tasks || []).map((task: any, i: number) => ({ 
+          ...task, 
           id: `t-${i}-${Date.now()}`, 
           completed: false 
         }))
@@ -222,31 +401,23 @@ const App: React.FC = () => {
       setView('MISSION_DETAIL');
       setIsScanning(false);
     } catch (err: any) {
-      console.error("Mission Generation Error:", err);
       if (err.message?.includes("Requested entity was not found.")) {
         setShowKeySelection(true);
         setHasValidKey(false);
       }
-      setScanError("SATELLITE_DECODE_ERROR");
+      setScanError(t.status_encrypting + "_FAIL");
     }
-  };
-
-  const handleNameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (tempName.trim()) {
-      setAgentName(tempName.trim().toUpperCase());
-      setOnboardingStep('AGE');
-    }
-  };
-
-  const handleAgeSelect = (age: number) => {
-    setAgentAge(age);
-    setView('HOME');
   };
 
   const currentMission = activeMissionId ? missions.find(m => m.id === activeMissionId) : null;
-  const completedCount = missions.reduce((acc, m) => acc + m.tasks.filter(t => t.completed).length, 0);
-  const progressPercent = currentMission ? (currentMission.tasks.filter(t => t.completed).length / currentMission.tasks.length) * 100 : 0;
+  const completedCount = missions.reduce((acc, m) => acc + m.tasks.filter(tk => tk.completed).length, 0);
+  const progressPercent = currentMission ? (currentMission.tasks.filter(tk => tk.completed).length / currentMission.tasks.length) * 100 : 0;
+
+  const getRankInfo = (age: number) => {
+    if (age <= 8) return { name: t.rankRookie, color: 'spyGreen' };
+    if (age <= 10) return { name: t.rankSpecialist, color: 'spyCyan' };
+    return { name: t.rankElite, color: 'spyPink' };
+  };
 
   return (
     <div className="min-h-screen max-w-md mx-auto flex flex-col relative bg-spyDark border-x border-white/5">
@@ -254,106 +425,83 @@ const App: React.FC = () => {
         isScanning={isScanning} 
         statusText={scanStatus} 
         error={scanError} 
-        onRetry={() => {
-          if (!hasValidKey) {
-            handleOpenKeySelector();
-          } else {
-            handleScanSurroundings();
-          }
-        }}
-        onClose={() => {
-          setIsScanning(false);
-          setScanError(undefined);
-        }}
+        onRetry={() => hasValidKey ? handleScanSurroundings() : handleOpenKeySelector()}
+        onClose={() => { setIsScanning(false); setScanError(undefined); }}
       />
 
       {showKeySelection && (
         <div className="fixed inset-0 z-[200] bg-spyDark/95 backdrop-blur-md flex flex-col items-center justify-center p-10 text-center m-4 rounded-[40px] border-4 border-spyCyan glow-border animate-in zoom-in duration-300">
           <Key size={60} className="text-spyCyan mb-6 animate-bounce" />
-          <h2 className="text-3xl font-black text-white uppercase mb-4 tracking-tighter leading-none">Uplink Required</h2>
-          <p className="text-sm text-white/60 mb-8 font-mono leading-relaxed px-4 italic">Agent, decrypting local sectors requires an Elite Secret Key.</p>
-          
+          <h2 className="text-3xl font-black text-white uppercase mb-4 tracking-tighter leading-none">{t.uplinkRequired}</h2>
+          <p className="text-sm text-white/60 mb-8 font-mono leading-relaxed px-4 italic">{t.satelliteDesc}</p>
           <div className="flex flex-col gap-4 w-full">
-            <button 
-              onClick={handleOpenKeySelector} 
-              className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl uppercase tracking-widest flex items-center justify-center gap-3"
-            >
+            <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl uppercase tracking-widest flex items-center justify-center gap-3">
               <Key size={24} /> SELECT_KEY
             </button>
-            
-            <button 
-              onClick={handleManualBypass} 
-              className="w-full bg-spyGreen text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#008f24] active:translate-y-2 active:shadow-none transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3"
-            >
-              <CheckCircle2 size={20} /> I_HAVE_A_KEY / PROCEED
+            <button onClick={handleManualBypass} className="w-full bg-spyGreen text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#008f24] active:translate-y-2 active:shadow-none transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3">
+              <CheckCircle2 size={20} /> {t.proceed}
             </button>
-
-            <button 
-              onClick={() => setShowKeySelection(false)} 
-              className="w-full bg-white/5 text-white/40 font-black py-3 rounded-3xl transition-all text-[10px] uppercase tracking-[0.2em] border border-white/5"
-            >
-              CANCEL
-            </button>
-          </div>
-          
-          <div className="mt-8 p-4 bg-black/40 rounded-2xl border border-white/5 w-full">
-            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-[10px] text-spyCyan underline uppercase tracking-widest font-black flex items-center justify-center gap-2">
-              <ExternalLink size={12}/> Billing Protocols
-            </a>
           </div>
         </div>
       )}
 
-      {view !== 'AGE_SELECT' && (
+      {view !== 'ONBOARDING' && (
         <header className="sticky top-0 z-50 bg-spyDark/80 backdrop-blur-xl border-b-2 border-white/10 p-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-spyCyan to-spyPink text-black flex items-center justify-center rounded-2xl shadow-lg transform -rotate-3 hover:rotate-0 transition-transform cursor-pointer">
+            <div className="w-12 h-12 bg-gradient-to-br from-spyCyan to-spyPink text-black flex items-center justify-center rounded-2xl shadow-lg transform -rotate-3 hover:rotate-0 transition-transform">
               <Ghost size={28} />
             </div>
             <div>
               <h1 className="text-lg font-black text-white leading-none uppercase tracking-tighter">Spy_Squad</h1>
-              <div className="text-[10px] text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse"><Activity size={10}/> Stealth_On</div>
+              <div className="text-[10px] text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse"><Activity size={10}/> {t.stealthOn}</div>
             </div>
           </div>
-          <div className="bg-spySlate px-4 py-2 rounded-2xl border-2 border-white/10 flex items-center gap-2 group cursor-help text-right">
+          <div className="bg-spySlate px-4 py-2 rounded-2xl border-2 border-white/10 flex items-center gap-2 text-right">
             <div>
                <span className="block text-[10px] font-black text-spyCyan uppercase leading-none mb-0.5">{agentName}</span>
-               <span className="text-sm font-black text-white tracking-widest leading-none">{completedCount * 10} XP</span>
+               <span className="text-sm font-black text-white tracking-widest leading-none">{completedCount * 10} {t.xp}</span>
             </div>
-            <Zap size={18} className="text-spyAmber group-hover:scale-125 transition-transform" />
+            <Zap size={18} className="text-spyAmber animate-pulse" />
           </div>
         </header>
       )}
 
       <main className="flex-1 overflow-y-auto p-5 pb-28">
-        {view === 'AGE_SELECT' ? (
+        {view === 'ONBOARDING' ? (
           <div className="h-full flex flex-col items-center justify-center py-10 animate-in zoom-in duration-500">
-            {onboardingStep === 'NAME' ? (
+            {onboardingStep === 'LANG' ? (
               <div className="w-full px-4 animate-in slide-in-from-bottom-10">
+                <div className="w-24 h-24 bg-spyPink/20 mx-auto flex items-center justify-center rounded-[30px] mb-10 border-4 border-spyPink shadow-[0_0_40px_rgba(255,0,122,0.3)] animate-pulse">
+                  <Languages size={48} className="text-spyPink" />
+                </div>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 text-center leading-none">
+                  {TRANSLATIONS[lang].selectCipher}
+                </h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {(['EN', 'IT', 'FR', 'PT'] as Language[]).map(l => (
+                    <button
+                      key={l}
+                      onClick={() => { setLang(l); setOnboardingStep('NAME'); }}
+                      className="group relative p-8 rounded-[30px] border-4 border-white/5 bg-spySlate hover:border-spyPink hover:scale-[1.05] transition-all overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-spyPink/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <span className="relative text-3xl font-black text-white group-hover:text-spyPink">{l}</span>
+                      <div className="absolute bottom-2 right-4 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Ready</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : onboardingStep === 'NAME' ? (
+              <div className="w-full px-4 animate-in slide-in-from-right-10">
                 <div className="w-32 h-32 bg-spyCyan/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyCyan shadow-[0_0_40px_rgba(0,242,255,0.3)] animate-pulse">
                   <UserCircle size={64} className="text-spyCyan" />
                 </div>
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">Secret Identity<br/><span className="text-spyCyan text-2xl tracking-[0.2em]">Required</span></h2>
-                <form onSubmit={handleNameSubmit} className="space-y-6">
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      maxLength={12}
-                      value={tempName}
-                      onChange={(e) => setTempName(e.target.value)}
-                      placeholder="ENTER_CODENAME"
-                      className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest"
-                      autoFocus
-                    />
-                    <div className="absolute top-0 right-4 h-full flex items-center">
-                       <Fingerprint className="text-white/10" size={32} />
-                    </div>
-                  </div>
-                  <button 
-                    disabled={!tempName.trim()}
-                    className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl disabled:opacity-20 disabled:grayscale disabled:shadow-none"
-                  >
-                    CONFIRM IDENTITY
+                <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.identityReq}</h2>
+                <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('AGE'); } }} className="space-y-6">
+                  <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest" autoFocus />
+                  <button disabled={!tempName.trim()} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl">{t.confirmIdentity}</button>
+                  <button type="button" onClick={() => setOnboardingStep('LANG')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                    <ChevronLeft size={14}/> BACK_TO_CIPHER_SELECT
                   </button>
                 </form>
               </div>
@@ -362,21 +510,35 @@ const App: React.FC = () => {
                 <div className="w-32 h-32 bg-spyPink/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyPink shadow-[0_0_40px_rgba(255,0,122,0.3)] animate-pulse">
                   <Fingerprint size={64} className="text-spyPink" />
                 </div>
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">Welcome,<br/><span className="text-spyPink">{agentName}!</span></h2>
-                <p className="text-xs text-white/50 mb-12 text-center font-bold px-12 uppercase tracking-widest">Select your rank:</p>
-                <div className="grid grid-cols-2 gap-5 w-full px-2">
-                  {[6, 7, 8, 9, 10, 11, 12].map((age) => (
-                    <button
-                      key={age}
-                      onClick={() => handleAgeSelect(age)}
-                      className={`p-6 rounded-3xl border-4 text-center transition-all active:scale-90 flex flex-col items-center group
-                        ${age <= 8 ? 'border-spyGreen text-spyGreen bg-spyGreen/5 hover:bg-spyGreen hover:text-black' : 'border-spyCyan text-spyCyan bg-spyCyan/5 hover:bg-spyCyan hover:text-black'}`}
-                    >
-                      <span className="text-5xl font-black group-hover:scale-110 transition-transform">{age}</span>
-                      <span className="text-[10px] uppercase font-black tracking-[0.2em] mt-2 opacity-60">{age <= 8 ? 'ROOKIE' : 'ELITE'}</span>
-                    </button>
-                  ))}
+                <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.welcome},<br/><span className="text-spyPink">{agentName}!</span></h2>
+                <p className="text-xs text-white/50 mb-12 text-center font-black px-12 uppercase tracking-widest leading-relaxed">{t.selectRank}</p>
+                <div className="grid grid-cols-2 gap-5 w-full px-2 pb-10">
+                  {[6, 7, 8, 9, 10, 11, 12].map((age) => {
+                    const rank = getRankInfo(age);
+                    const borderColorClass = rank.color === 'spyGreen' ? 'border-spyGreen/40' : rank.color === 'spyCyan' ? 'border-spyCyan/40' : 'border-spyPink/40';
+                    const activeColorClass = rank.color === 'spyGreen' ? 'hover:bg-spyGreen hover:border-spyGreen' : rank.color === 'spyCyan' ? 'hover:bg-spyCyan hover:border-spyCyan' : 'hover:bg-spyPink hover:border-spyPink';
+                    const textColorClass = rank.color === 'spyGreen' ? 'text-spyGreen' : rank.color === 'spyCyan' ? 'text-spyCyan' : 'text-spyPink';
+                    
+                    return (
+                      <button 
+                        key={age} 
+                        onClick={() => { setAgentAge(age); setView('HOME'); }} 
+                        className={`p-6 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center group relative overflow-hidden bg-spySlate/50 ${borderColorClass} ${activeColorClass} hover:text-black`}
+                      >
+                        <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
+                          <span className={`text-[11px] font-black uppercase tracking-widest ${textColorClass} group-hover:text-black mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
+                            {rank.name}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
+                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                   <ChevronLeft size={14}/> BACK_TO_IDENTITY
+                </button>
               </div>
             )}
           </div>
@@ -386,21 +548,20 @@ const App: React.FC = () => {
               <Radar className="absolute -bottom-10 -right-10 text-spyCyan/10 w-48 h-48 group-hover:scale-125 transition-transform duration-700" />
               <div className="flex items-center gap-3 text-spyCyan mb-4">
                 <Sparkles size={24} className="animate-spin-slow" />
-                <h2 className="text-sm font-black tracking-widest uppercase italic">The Fun Radar</h2>
+                <h2 className="text-sm font-black tracking-widest uppercase italic">{t.radarTitle}</h2>
               </div>
-              <p className="text-lg text-white font-black mb-8 leading-tight">Ready to find some wacky cultural glitches nearby, <span className="text-spyCyan">{agentName}</span>?</p>
-              <button onClick={handleScanSurroundings} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl flex items-center justify-center gap-4 shadow-[0_8px_0_#00a6af] hover:shadow-[0_4px_0_#00a6af] hover:translate-y-[4px] active:translate-y-2 active:shadow-none transition-all group text-lg">
-                <Radar size={28} className="group-hover:rotate-180 transition-transform duration-1000" /> SCAN SECTOR
+              <p className="text-lg text-white font-black mb-8 leading-tight">{t.radarDesc} <span className="text-spyCyan">{agentName}</span>?</p>
+              <button onClick={handleScanSurroundings} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl flex items-center justify-center gap-4 shadow-[0_8px_0_#00a6af] hover:shadow-[0_4px_0_#00a6af] hover:translate-y-[4px] active:translate-y-2 active:shadow-none transition-all group text-lg uppercase">
+                <Radar size={28} className="group-hover:rotate-180 transition-transform duration-1000" /> {t.scanSector}
               </button>
             </div>
-
             <div className="grid gap-6">
               {missions.length > 0 ? missions.map(m => (
-                <MissionCard key={m.id} mission={m} onSelect={(m) => { setActiveMissionId(m.id); setView('MISSION_DETAIL'); }} />
+                <MissionCard key={m.id} mission={m} t={t} onSelect={(m) => { setActiveMissionId(m.id); setView('MISSION_DETAIL'); }} />
               )) : (
                 <div className="py-20 text-center border-4 border-dashed border-white/5 rounded-[40px] bg-white/2">
                    <Ghost size={50} className="mx-auto text-white/10 mb-4 animate-pulse" />
-                   <p className="text-sm text-white/20 font-black uppercase tracking-widest">No Active Missions Found</p>
+                   <p className="text-sm text-white/20 font-black uppercase tracking-widest">{t.noMissions}</p>
                 </div>
               )}
             </div>
@@ -408,13 +569,13 @@ const App: React.FC = () => {
         ) : view === 'SELECT_LOCATION' ? (
           <div className="animate-in slide-in-from-right-10 duration-500">
             <button onClick={() => setView('HOME')} className="mb-8 flex items-center gap-2 text-spyCyan font-black text-sm uppercase bg-spyCyan/10 px-6 py-3 rounded-full border-2 border-spyCyan/20 hover:bg-spyCyan hover:text-black transition-all">
-              <ChevronLeft size={20} /> ABORT_SCAN
+              <ChevronLeft size={20} /> {t.abortScan}
             </button>
             <div className="mb-10 p-8 rounded-[40px] border-4 border-spyAmber/40 bg-spyAmber/5 flex gap-5 shadow-2xl shadow-spyAmber/10">
                <div className="bg-spyAmber p-4 rounded-3xl self-start shadow-lg"><Flame className="text-black" /></div>
                <div>
-                 <h2 className="text-2xl font-black text-white uppercase leading-none mb-2">Targets Locked!</h2>
-                 <p className="text-sm text-spyAmber font-black uppercase tracking-widest">Pick a zone, {agentName}.</p>
+                 <h2 className="text-2xl font-black text-white uppercase leading-none mb-2">{t.targetsLocked}</h2>
+                 <p className="text-sm text-spyAmber font-black uppercase tracking-widest">{t.pickZone}, {agentName}.</p>
                </div>
             </div>
             <div className="space-y-5">
@@ -436,70 +597,62 @@ const App: React.FC = () => {
                 </div>
                 <div>
                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{agentName}</h2>
-                   <p className="text-xs font-black text-spyCyan uppercase tracking-[0.2em] mt-1">Agent Rank: Level {agentAge}</p>
+                   <p className="text-xs font-black text-spyCyan uppercase tracking-[0.2em] mt-1">{t.rank}: {agentAge} {t.yearsSuffix}</p>
                 </div>
              </div>
-
              <div className="space-y-4">
+                <div className="p-8 rounded-[40px] bg-spySlate border-4 border-white/5 space-y-6">
+                   <div className="flex items-center gap-3">
+                      <Languages size={24} className="text-spyPink" />
+                      <span className="text-sm font-black text-white uppercase tracking-widest">{t.cipherSelect}</span>
+                   </div>
+                   <div className="grid grid-cols-4 gap-2">
+                      {(['EN', 'IT', 'FR', 'PT'] as Language[]).map(l => (
+                        <button key={l} onClick={() => setLang(l)} className={`py-3 rounded-2xl font-black text-xs transition-all border-2 ${lang === l ? 'bg-spyPink border-spyPink text-black' : 'border-white/10 text-white/40 hover:border-spyPink/50'}`}>{l}</button>
+                      ))}
+                   </div>
+                </div>
                 <div className="p-8 rounded-[40px] bg-spySlate border-4 border-white/5 space-y-6">
                    <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
                          <Globe size={24} className="text-spyCyan" />
-                         <span className="text-sm font-black text-white uppercase tracking-widest">Satellite Link</span>
+                         <span className="text-sm font-black text-white uppercase tracking-widest">{t.satelliteLink}</span>
                       </div>
-                      {hasValidKey ? (
-                        <div className="flex items-center gap-2 text-spyGreen bg-spyGreen/10 px-4 py-2 rounded-full border border-spyGreen/20">
-                          <ShieldCheck size={16} />
-                          <span className="text-[10px] font-black uppercase">Connected</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-spyRed bg-spyRed/10 px-4 py-2 rounded-full border border-spyRed/20 animate-pulse">
-                          <ShieldX size={16} />
-                          <span className="text-[10px] font-black uppercase">Offline</span>
-                        </div>
-                      )}
+                      <div className={`flex items-center gap-2 ${hasValidKey ? 'text-spyGreen' : 'text-spyRed'} animate-pulse`}>
+                         {hasValidKey ? <ShieldCheck size={16} /> : <ShieldX size={16} />}
+                      </div>
                    </div>
-                   <button 
-                     onClick={handleOpenKeySelector}
-                     className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-xs"
-                   >
-                     <RefreshCw size={18} /> Update Key Selection
-                   </button>
+                   <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-[10px]"><RefreshCw size={18} /> {t.updateKey}</button>
                 </div>
-
-                <button 
-                  onClick={() => { setView('AGE_SELECT'); setOnboardingStep('NAME'); }}
-                  className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10"
-                >
-                  Terminate_Identity
-                </button>
+                <button onClick={() => { setView('ONBOARDING'); setOnboardingStep('LANG'); }} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
              </div>
           </div>
         ) : (
           <div className="animate-in slide-in-from-right-10 duration-500">
             <div className="flex justify-between items-center mb-8">
-              <button onClick={() => setView('HOME')} className="flex items-center gap-2 text-spyCyan font-black text-sm uppercase bg-spyCyan/10 px-6 py-3 rounded-full border-2 border-spyCyan/20 hover:bg-spyCyan hover:text-black transition-all"><ChevronLeft size={20} /> RETREAT_TO_HQ</button>
-              {currentMission?.status === 'COMPLETED' && <div className="bg-spyGreen text-black font-black text-xs px-5 py-3 rounded-full flex items-center gap-2 shadow-lg shadow-spyGreen/30 animate-bounce"><Trophy size={18}/> MISSION_CLEAR!</div>}
+              <button onClick={() => setView('HOME')} className="flex items-center gap-2 text-spyCyan font-black text-sm uppercase bg-spyCyan/10 px-6 py-3 rounded-full border-2 border-spyCyan/20 hover:bg-spyCyan hover:text-black transition-all"><ChevronLeft size={20} /> {t.retreat}</button>
+              {currentMission?.status === 'COMPLETED' && <div className="bg-spyGreen text-black font-black text-xs px-5 py-3 rounded-full flex items-center gap-2 shadow-lg shadow-spyGreen/30 animate-bounce"><Trophy size={18}/> {t.missionClear}</div>}
             </div>
-
             {currentMission && (
               <div className="space-y-8 pb-10">
                 <div className="p-8 rounded-[40px] border-4 border-spyGreen/30 bg-spyGreen/5 relative overflow-hidden shadow-2xl shadow-spyGreen/10">
                   <div className="flex items-center gap-3 mb-6">
-                     <span className="bg-spyGreen text-black text-[10px] font-black px-3 py-1.5 rounded-lg">TOP_SECRET</span>
+                     <span className="bg-spyGreen text-black text-[10px] font-black px-3 py-1.5 rounded-lg">{t.topSecret}</span>
                      <span className="text-spyGreen text-xs font-black tracking-widest">{currentMission.codeName}</span>
                   </div>
                   <h2 className="text-4xl font-black text-white uppercase mb-4 leading-[0.9] tracking-tighter">{currentMission.title}</h2>
                   <p className="text-sm text-white/70 font-bold leading-relaxed mb-8">{currentMission.description}</p>
-                  
                   <div className="h-6 w-full bg-white/10 rounded-full overflow-hidden border-2 border-white/5 p-1">
                     <div className="h-full bg-spyGreen rounded-full transition-all duration-700 shadow-[0_0_25px_#00ff41]" style={{ width: `${progressPercent}%` }}></div>
                   </div>
+                  <div className="mt-4 flex justify-between text-[10px] font-black text-spyGreen uppercase tracking-widest">
+                     <span className="flex items-center gap-2"><Sparkles size={14}/> {t.intelCaptured}</span>
+                     <span>{currentMission.tasks.filter(tk => tk.completed).length} / {currentMission.tasks.length} {t.secured}</span>
+                  </div>
                 </div>
-
                 <div className="grid grid-cols-1 gap-4">
-                   {currentMission.tasks.map(t => (
-                     <TaskItem key={t.id} task={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
+                   {currentMission.tasks.map(tk => (
+                     <TaskItem key={tk.id} task={tk} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
                    ))}
                 </div>
               </div>
@@ -508,17 +661,11 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {view !== 'AGE_SELECT' && (
+      {view !== 'ONBOARDING' && (
         <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 p-5 flex justify-around items-center z-50 rounded-t-[40px]">
-          <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}>
-            <Radar size={32} />
-          </button>
-          <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}>
-            <Terminal size={32} />
-          </button>
-          <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}>
-             <UserCircle size={32} />
-          </button>
+          <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
+          <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
+          <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
           <button onClick={() => window.location.reload()} className="p-4 text-white/40 hover:text-spyRed transition-all"><Power size={32} /></button>
         </footer>
       )}

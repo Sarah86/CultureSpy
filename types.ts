@@ -1,6 +1,7 @@
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
 export type SensoryType = 'sight' | 'sound' | 'touch' | 'smell' | 'vibe';
+export type Language = 'EN' | 'IT' | 'FR' | 'PT';
 
 export interface Evidence {
   timestamp: number;

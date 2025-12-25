@@ -1,14 +1,15 @@
 
 import React from 'react';
 import { Task, SensoryType } from '../types';
-import { Check, Eye, Ear, Hand, Wind, Zap, Camera, Edit3, MessageSquare, Info, Star } from 'lucide-react';
+import { Check, Eye, Ear, Hand, Wind, Zap, Star } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
+  t: any;
   onToggle: (id: string) => void;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, t, onToggle }) => {
   const getSensoryIcon = (type?: SensoryType) => {
     switch (type) {
       case 'sight': return <Eye size={18} className="text-spyCyan" />;
@@ -36,7 +37,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle }) => {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={`text-[13px] font-bold leading-tight truncate-2-lines transition-all
+        <p className={`text-[13px] font-bold leading-tight transition-all
           ${task.completed ? 'text-spyGreen line-through' : 'text-white'}
         `}>
           {task.prompt}

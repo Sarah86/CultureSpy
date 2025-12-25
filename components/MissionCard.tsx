@@ -5,13 +5,13 @@ import { Shield, ChevronRight, Lock, Zap, Eye, Binary, Music, Target, Sparkles }
 
 interface MissionCardProps {
   mission: Mission;
+  t: any;
   onSelect: (mission: Mission) => void;
 }
 
-const MissionCard: React.FC<MissionCardProps> = ({ mission, onSelect }) => {
+const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect }) => {
   const isCompleted = mission.status === 'COMPLETED';
   const isActive = mission.status === 'ACTIVE';
-  const completedCount = mission.tasks.filter(t => t.completed).length;
 
   const CategoryIcon = () => {
     switch (mission.category) {
@@ -51,45 +51,36 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, onSelect }) => {
             key={i} 
             size={12} 
             className={`${i < mission.difficulty ? 'text-spyAmber fill-spyAmber' : 'text-white/10'} group-hover:scale-110 transition-transform`} 
-            style={{ transitionDelay: `${i * 50}ms` }}
           />
         ))}
-        <span className="text-[10px] ml-3 tracking-widest font-black uppercase text-white/40">Lvl {mission.difficulty}</span>
+        <span className="text-[10px] ml-3 tracking-widest font-black uppercase text-white/40">{t.lvl} {mission.difficulty}</span>
       </div>
 
       <div className="flex justify-between items-end">
         <div className="flex flex-col gap-2">
            <div className="flex gap-1">
-              {mission.tasks.map((t, idx) => (
-                <div key={idx} className={`w-2 h-2 rounded-full border border-white/10 ${t.completed ? 'bg-spyGreen shadow-[0_0_8px_#00ff41]' : 'bg-white/5'}`}></div>
+              {mission.tasks.map((task, idx) => (
+                <div key={idx} className={`w-2 h-2 rounded-full border border-white/10 ${task.completed ? 'bg-spyGreen shadow-[0_0_8px_#00ff41]' : 'bg-white/5'}`}></div>
               ))}
            </div>
            <div className="text-[11px] font-black uppercase tracking-widest">
             {isCompleted ? (
-              <span className="text-spyGreen flex items-center gap-1"><Sparkles size={12}/> DATA_CACHED</span>
+              <span className="text-spyGreen flex items-center gap-1"><Sparkles size={12}/> {t.dataCached}</span>
             ) : isActive ? (
-              <span className="text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1 rounded-full">ACTIVE_OP</span>
+              <span className="text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1 rounded-full">{t.activeOp}</span>
             ) : (
-              <span className="text-white/30">{mission.tasks.length} MICRO_TASKS</span>
+              <span className="text-white/30">{mission.tasks.length} {t.microTasks}</span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs font-black uppercase text-spyCyan opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
-          Infiltrate <ChevronRight size={20} />
+          {t.infiltrate} <ChevronRight size={20} />
         </div>
       </div>
 
-      {/* Modern Scan Line Effect */}
       <div className="absolute inset-0 pointer-events-none opacity-10">
          <div className="w-full h-1 bg-spyCyan absolute top-0 animate-[scan_3s_linear_infinite]"></div>
       </div>
-
-      <style>{`
-        @keyframes scan {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(1000%); }
-        }
-      `}</style>
     </div>
   );
 };
