@@ -1,0 +1,8 @@
+{
+  "name": "CultureSpy",
+  "description": "A high-stakes cultural intelligence tool for elite junior agents to analyze art, science, and music through a cyberpunk spy-tech interface.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
