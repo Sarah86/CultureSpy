@@ -1,4 +1,56 @@
 
+export interface Translations {
+  selectCipher: string;
+  briefingTitle: string;
+  briefingText: string;
+  startInfiltration: string;
+  identityReq: string;
+  enterCodename: string;
+  confirmIdentity: string;
+  welcome: string;
+  selectRank: string;
+  yearsSuffix: string;
+  rankRookie: string;
+  rankSpecialist: string;
+  rankElite: string;
+  stealthOn: string;
+  xp: string;
+  radarTitle: string;
+  radarDesc: string;
+  scanSector: string;
+  manualSearch: string;
+  searchPlaceholder: string;
+  targetsLocked: string;
+  pickZone: string;
+  abortScan: string;
+  retreat: string;
+  missionClear: string;
+  intelCaptured: string;
+  secured: string;
+  settingsTitle: string;
+  rank: string;
+  satelliteLink: string;
+  satelliteDesc: string;
+  updateKey: string;
+  terminateIdentity: string;
+  cipherSelect: string;
+  proceed: string;
+  uplinkRequired: string;
+  noMissions: string;
+  topSecret: string;
+  lvl: string;
+  microTasks: string;
+  infiltrate: string;
+  dataCached: string;
+  activeOp: string;
+  status_scanning: string;
+  status_searching: string;
+  status_connecting: string;
+  status_encrypting: string;
+  error_radar: string;
+  error_gps: string;
+}
+
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
 export type SensoryType = 'sight' | 'sound' | 'touch' | 'smell' | 'vibe';
 export type Language = 'EN' | 'IT' | 'FR' | 'PT';

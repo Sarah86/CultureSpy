@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-// Fixed the incorrect 'eye' import to 'Eye'
 import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { getLocalizedMockMissions } from './data';
-import { Mission, Task, TaskType, SensoryType, Language } from './types';
+import { Mission, Task, TaskType, SensoryType, Language, Translations } from './types';
 import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
 import TerminalText from './components/TerminalText';
@@ -16,7 +15,7 @@ interface NearbyTarget {
   description: string;
 }
 
-const TRANSLATIONS: Record<Language, any> = {
+const TRANSLATIONS: Record<Language, Translations> = {
   EN: {
     selectCipher: 'SELECT COMMUNICATION CIPHER',
     briefingTitle: 'MISSION_BRIEFING',

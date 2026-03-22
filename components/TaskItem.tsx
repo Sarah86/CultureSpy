@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { Task, SensoryType } from '../types';
+import { Task, SensoryType, Translations } from '../types';
 import { Check, Eye, Ear, Hand, Wind, Zap, Star, Binary } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
-  t: any;
+  t: Translations;
   onToggle: (id: string) => void;
 }
 

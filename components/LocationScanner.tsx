@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-/* Added Zap to the imports to resolve the missing name error */
 import { Radar, Crosshair, Loader2, AlertTriangle, Sparkles, Ghost, Zap, RefreshCw, XCircle } from 'lucide-react';
 import TerminalText from './TerminalText';
 

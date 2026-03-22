@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { Mission } from '../types';
+import { Mission, Translations } from '../types';
 import { Shield, ChevronRight, Lock, Zap, Eye, Binary, Music, Target, Sparkles } from 'lucide-react';
 
 interface MissionCardProps {
   mission: Mission;
-  t: any;
+  t: Translations;
   onSelect: (mission: Mission) => void;
 }
 
