@@ -235,6 +235,7 @@ const App: React.FC = () => {
   const [manualSearchInput, setManualSearchInput] = useState('');
   
   const [isScanning, setIsScanning] = useState(false);
+  const [lastTarget, setLastTarget] = useState<NearbyTarget | null>(null);
   const [scanStatus, setScanStatus] = useState('');
   const [scanError, setScanError] = useState<string | undefined>(undefined);
   const [detectedTargets, setDetectedTargets] = useState<NearbyTarget[]>([]);
@@ -433,13 +434,45 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRegenerateMission = () => {
+    if (!lastTarget) return;
+    const cacheKey = `culturespy_mission_${lastTarget.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
+    localStorage.removeItem(cacheKey);
+    handleSelectTarget(lastTarget);
+  };
+
   const handleSelectTarget = async (target: NearbyTarget) => {
     if (!agentAge) return;
+    setLastTarget(target);
     setIsScanning(true);
     setScanError(undefined);
     setScanStatus(t.status_encrypting);
 
     try {
+      // Check localStorage cache first — same location + language = same mission, zero API cost
+      const cacheKey = `culturespy_mission_${target.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const data = JSON.parse(cached);
+        const newMission: Mission = {
+          ...data,
+          id: `gen-${Date.now()}`,
+          status: 'PENDING',
+          isLocked: false,
+          category: 'ART',
+          tasks: (data.tasks || []).map((task: any, i: number) => ({
+            ...task,
+            id: `t-${i}-${Date.now()}`,
+            completed: false
+          }))
+        };
+        setMissions(prev => [newMission, ...prev]);
+        setActiveMissionId(newMission.id);
+        setView('MISSION_DETAIL');
+        setIsScanning(false);
+        return;
+      }
+
       // Create a new GoogleGenAI instance right before making an API call to use latest key
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `
@@ -483,17 +516,20 @@ const App: React.FC = () => {
       });
 
       const data = JSON.parse(response.text);
-      
+
+      // Save to cache so the same location never triggers another API call
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+
       const newMission: Mission = {
         ...data,
         id: `gen-${Date.now()}`,
         status: 'PENDING',
         isLocked: false,
         category: 'ART',
-        tasks: (data.tasks || []).map((task: any, i: number) => ({ 
-          ...task, 
-          id: `t-${i}-${Date.now()}`, 
-          completed: false 
+        tasks: (data.tasks || []).map((task: any, i: number) => ({
+          ...task,
+          id: `t-${i}-${Date.now()}`,
+          completed: false
         }))
       };
 
@@ -791,7 +827,14 @@ const App: React.FC = () => {
           <div className="animate-in slide-in-from-right-10 duration-500">
             <div className="flex justify-between items-center mb-8">
               <button onClick={() => setView('HOME')} className="flex items-center gap-2 text-spyCyan font-black text-sm uppercase bg-spyCyan/10 px-6 py-3 rounded-full border-2 border-spyCyan/20 hover:bg-spyCyan hover:text-black transition-all"><ChevronLeft size={20} /> {t.retreat}</button>
-              {currentMission?.status === 'COMPLETED' && <div className="bg-spyGreen text-black font-black text-xs px-5 py-3 rounded-full flex items-center gap-2 shadow-lg shadow-spyGreen/30 animate-bounce"><Trophy size={18}/> {t.missionClear}</div>}
+              <div className="flex items-center gap-3">
+                {lastTarget && (
+                  <button onClick={handleRegenerateMission} className="flex items-center gap-2 text-spyAmber font-black text-xs uppercase bg-spyAmber/10 px-4 py-3 rounded-full border-2 border-spyAmber/20 hover:bg-spyAmber hover:text-black transition-all">
+                    <RefreshCw size={16} /> NEW
+                  </button>
+                )}
+                {currentMission?.status === 'COMPLETED' && <div className="bg-spyGreen text-black font-black text-xs px-5 py-3 rounded-full flex items-center gap-2 shadow-lg shadow-spyGreen/30 animate-bounce"><Trophy size={18}/> {t.missionClear}</div>}
+              </div>
             </div>
             {currentMission && (
               <div className="space-y-8 pb-10">
