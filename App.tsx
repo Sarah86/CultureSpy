@@ -67,6 +67,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'ENCRYPTING_MISSION_DATA',
     error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
     error_gps: 'GPS_LINK_FAILURE',
+    apiError: 'SATELLITE_UPLINK_FAILURE: Free tier service. Please retry in 30 seconds.',
     privacyLabel: 'PRIVACY_PROTOCOL',
     privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.'
   },
@@ -120,6 +121,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRITTOGRAFIA_MISSIONE',
     error_radar: 'RADAR DISTURBATO: NO DATI',
     error_gps: 'ERRORE_LINK_GPS',
+    apiError: 'ERRORE_UPLINK_SATELLITE: Servizio gratuito in uso. Riprova tra 30 secondi.',
     privacyLabel: 'PROTOCOLLO_PRIVACY',
     privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.'
   },
@@ -173,6 +175,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CHIFFREMENT_MISSION',
     error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
     error_gps: 'ERREUR_GPS',
+    apiError: "ERREUR_SATELLITE : Service gratuit en cours d'utilisation. Réessayez dans 30 secondes.",
     privacyLabel: 'PROTOCOLE_PRIVACY',
     privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD."
   },
@@ -226,6 +229,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
     error_gps: 'FALHA_LINK_GPS',
+    apiError: 'FALHA_UPLINK_SATÉLITE: Serviço gratuito. Tente novamente em 30 segundos.',
     privacyLabel: 'PROTOCOLO_PRIVACIDADE',
     privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.'
   }
@@ -378,7 +382,7 @@ const App: React.FC = () => {
         throw err;
       }
     } catch (err: any) {
-      setScanError(err.message || "SEARCH_FAILURE: MAPS_UPLINK_DENIED");
+      setScanError(err.message || t.apiError);
     }
   };
 
@@ -439,7 +443,7 @@ const App: React.FC = () => {
         throw err;
       }
     } catch (err: any) {
-      setScanError(err.message || t.error_gps);
+      setScanError(err.message || t.apiError);
     }
   };
 
@@ -551,7 +555,7 @@ const App: React.FC = () => {
         setShowKeySelection(true);
         setHasValidKey(false);
       }
-      setScanError(t.status_encrypting + "_FAIL");
+      setScanError(t.apiError);
     }
   };
 
@@ -713,6 +717,9 @@ const App: React.FC = () => {
                 </button>
               </div>
             )}
+            <div className="mt-12 mb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+              Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
+            </div>
           </div>
         ) : view === 'HOME' ? (
           <div className="space-y-8 animate-in fade-in duration-500">
@@ -831,6 +838,9 @@ const App: React.FC = () => {
                 </div>
                 <button onClick={() => { setView('ONBOARDING'); setOnboardingStep('LANG'); }} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
              </div>
+                <div className="mt-10 pb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                  Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
+                </div>
           </div>
         ) : (
           <div className="animate-in slide-in-from-right-10 duration-500">
@@ -872,12 +882,13 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
       {view !== 'ONBOARDING' && (
         <>
           <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 p-5 flex justify-around items-center z-50 rounded-t-[40px]">
-            <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all {(view === 'HOME' || view === 'SELECT_LOCATION'} ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
-            <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all {(view === 'MISSION_DETAIL'} ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
-            <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all {(view === 'SETTINGS'} ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
+            <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
+            <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
+            <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
             <button onClick={() => window.location.reload()} className="p-4 text-white/40 hover:text-spyRed transition-all"><Power size={32} /></button>
             <button onClick={() => setShowPrivacy(!showPrivacy)} className="p-4 text-white/40 hover:text-spyCyan transition-all"><Shield size={32} /></button>
             {showPrivacy && (

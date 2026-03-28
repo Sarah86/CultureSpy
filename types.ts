@@ -49,6 +49,7 @@ export interface Translations {
   status_encrypting: string;
   error_radar: string;
   error_gps: string;
+  apiError: string;
   privacyLabel: string;
   privacyInfo: string;
 }
