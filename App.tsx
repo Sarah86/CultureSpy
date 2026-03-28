@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { getLocalizedMockMissions } from './data';
@@ -65,7 +66,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_connecting: 'CATCHING_SECRET_WAVES',
     status_encrypting: 'ENCRYPTING_MISSION_DATA',
     error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
-    error_gps: 'GPS_LINK_FAILURE'
+    error_gps: 'GPS_LINK_FAILURE',
+    privacyLabel: 'PRIVACY_PROTOCOL',
+    privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -116,7 +119,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_connecting: 'SINTONIZZAZIONE_ONDE',
     status_encrypting: 'CRITTOGRAFIA_MISSIONE',
     error_radar: 'RADAR DISTURBATO: NO DATI',
-    error_gps: 'ERRORE_LINK_GPS'
+    error_gps: 'ERRORE_LINK_GPS',
+    privacyLabel: 'PROTOCOLLO_PRIVACY',
+    privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -167,7 +172,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_connecting: 'SYNCHRO_SATELLITE',
     status_encrypting: 'CHIFFREMENT_MISSION',
     error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
-    error_gps: 'ERREUR_GPS'
+    error_gps: 'ERREUR_GPS',
+    privacyLabel: 'PROTOCOLE_PRIVACY',
+    privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD."
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -218,11 +225,14 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_connecting: 'CAPTURANDO_ONDAS',
     status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
-    error_gps: 'FALHA_LINK_GPS'
+    error_gps: 'FALHA_LINK_GPS',
+    privacyLabel: 'PROTOCOLO_PRIVACIDADE',
+    privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.'
   }
 };
 
 const App: React.FC = () => {
+  const [showPrivacy, setShowPrivacy] = React.useState(false);
   const [lang, setLang] = useState<Language>('EN');
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
@@ -862,14 +872,27 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-
       {view !== 'ONBOARDING' && (
-        <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 p-5 flex justify-around items-center z-50 rounded-t-[40px]">
-          <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
-          <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
-          <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
-          <button onClick={() => window.location.reload()} className="p-4 text-white/40 hover:text-spyRed transition-all"><Power size={32} /></button>
-        </footer>
+        <>
+          <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 p-5 flex justify-around items-center z-50 rounded-t-[40px]">
+            <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all {(view === 'HOME' || view === 'SELECT_LOCATION'} ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
+            <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all {(view === 'MISSION_DETAIL'} ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
+            <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all {(view === 'SETTINGS'} ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
+            <button onClick={() => window.location.reload()} className="p-4 text-white/40 hover:text-spyRed transition-all"><Power size={32} /></button>
+            <button onClick={() => setShowPrivacy(!showPrivacy)} className="p-4 text-white/40 hover:text-spyCyan transition-all"><Shield size={32} /></button>
+            {showPrivacy && (
+              <div className="absolute bottom-full left-0 right-0 p-8 bg-spyDark/95 backdrop-blur-3xl border-t-4 border-spyCyan animate-in slide-in-from-bottom-10">
+                <div className="flex items-center gap-4 mb-4">
+                  <Shield className="text-spyCyan" size={24} />
+                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">{t.privacyLabel}</h3>
+                </div>
+                <p className="text-sm text-white/70 font-bold leading-relaxed">{t.privacyInfo}</p>
+                <button onClick={() => setShowPrivacy(false)} className="mt-6 w-full py-4 bg-spyCyan text-black font-black uppercase text-xs tracking-widest rounded-2xl">{t.proceed}</button>
+              </div>
+            )}
+          </footer>
+          <Analytics />
+        </>
       )}
     </div>
   );

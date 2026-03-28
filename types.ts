@@ -49,6 +49,8 @@ export interface Translations {
   status_encrypting: string;
   error_radar: string;
   error_gps: string;
+  privacyLabel: string;
+  privacyInfo: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
