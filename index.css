@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-spyGreen: #00ff41;
+  --color-spyAmber: #ffb000;
+  --color-spyRed: #ff3131;
+  --color-spyCyan: #00f2ff;
+  --color-spyPink: #ff007a;
+  --color-spyDark: #020617;
+  --color-spySlate: #0f172a;
+  --font-mono: 'JetBrains Mono', monospace;
+}
