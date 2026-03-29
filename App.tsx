@@ -66,7 +66,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'ENCRYPTING_MISSION_DATA',
     error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
     error_gps: 'GPS_LINK_FAILURE',
-    apiError: 'SATELLITE_UPLINK_FAILURE: Free tier service. Please retry in 30 seconds.',
+    apiError: 'SATELLITE_CONGESTION: UPLINK_THROTTLED. RE-ESTABLISHING_IN_30S.',
     privacyLabel: 'PRIVACY_PROTOCOL',
     privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.'
   },
@@ -120,7 +120,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRITTOGRAFIA_MISSIONE',
     error_radar: 'RADAR DISTURBATO: NO DATI',
     error_gps: 'ERRORE_LINK_GPS',
-    apiError: 'ERRORE_UPLINK_SATELLITE: Servizio gratuito in uso. Riprova tra 30 secondi.',
+    apiError: 'CONGESTIONE_SATELLITE: UPLINK_LIMITATO. RICONNESSIONE_IN_30S.',
     privacyLabel: 'PROTOCOLLO_PRIVACY',
     privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.'
   },
@@ -174,7 +174,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CHIFFREMENT_MISSION',
     error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
     error_gps: 'ERREUR_GPS',
-    apiError: "ERREUR_SATELLITE : Service gratuit en cours d'utilisation. Réessayez dans 30 secondes.",
+    apiError: 'CONGESTION_SATELLITE : LIAISON_RESTREINTE. RECONNEXION_DANS_30S.',
     privacyLabel: 'PROTOCOLE_PRIVACY',
     privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD."
   },
@@ -228,7 +228,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
     error_gps: 'FALHA_LINK_GPS',
-    apiError: 'FALHA_UPLINK_SATÉLITE: Serviço gratuito. Tente novamente em 30 segundos.',
+    apiError: 'CONGESTIONAMENTO_SATÉLITE: LINK_RESTRITO. RECONECTANDO_EM_30S.',
     privacyLabel: 'PROTOCOLO_PRIVACIDADE',
     privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.'
   }

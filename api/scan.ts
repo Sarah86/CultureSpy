@@ -9,27 +9,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!lat || !lng) return res.status(400).json({ error: 'Missing coordinates' });
 
   const langLabel = lang === 'PT' ? 'Português do Brasil' : lang;
-  const prompt = (process.env.AI_PROMPT_SCAN || '')
+  const rawPrompt = process.env.AI_PROMPT_SCAN || '';
+  const prompt = rawPrompt
     .replace(/\${lat}/g, lat.toString())
     .replace(/\${lng}/g, lng.toString())
     .replace(/\${langLabel}/g, langLabel);
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        tools: [{ googleMaps: {} }],
-        toolConfig: { retrievalConfig: { latLng: { latitude: lat, longitude: lng } } }
+        tools: [{ googleMaps: {} }] as any,
+        toolConfig: { retrievalConfig: { latLng: { latitude: lat, longitude: lng } } } as any
       }
     });
+    console.log('DEBUG: AI Response received');
 
-    const jsonMatch = response.text?.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return res.status(500).json({ error: 'No results found' });
+    const text = response.text;
+    const jsonMatch = text?.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.error('DEBUG: No JSON array found in response:', text);
+      return res.status(500).json({ error: 'No results found' });
+    }
 
     res.json({ targets: JSON.parse(jsonMatch[0]) });
   } catch (err: any) {
+    console.error('DEBUG: Scan Error:', err);
     const is404 = err.message?.includes('404') || err.message?.includes('Requested entity was not found');
     res.status(is404 ? 404 : 500).json({ error: err.message });
   }

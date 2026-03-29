@@ -18,18 +18,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .replace(/\${langLabel}/g, langLabel);
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        tools: [{ googleMaps: {} }],
-        toolConfig: { retrievalConfig: { latLng } }
+        tools: [{ googleMaps: {} }] as any,
+        toolConfig: { retrievalConfig: { latLng } } as any
       }
     });
 
-    const jsonMatch = response.text?.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return res.status(500).json({ error: 'No results found' });
+    const text = response.text;
+    const jsonMatch = text?.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.error('DEBUG: No JSON array found in search response:', text);
+      return res.status(500).json({ error: 'No results found' });
+    }
 
     const targets = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(targets) || targets.length === 0) {
@@ -38,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.json({ targets });
   } catch (err: any) {
+    console.error('DEBUG: Search Error:', err);
     const is404 = err.message?.includes('404') || err.message?.includes('Requested entity was not found');
     res.status(is404 ? 404 : 500).json({ error: err.message });
   }

@@ -21,10 +21,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .replace(/\${langLabel}/g, langLabel);
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -54,6 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.json(JSON.parse(response.text!));
   } catch (err: any) {
+    console.error('DEBUG: Mission Error:', err);
     const is404 = err.message?.includes('404') || err.message?.includes('Requested entity was not found');
     res.status(is404 ? 404 : 500).json({ error: err.message });
   }
