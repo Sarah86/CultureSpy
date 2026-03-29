@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/db93a83a-2fd8-49e0-8db6-1c386ccb39b6" width="100%" alt="CultureSpy Cover">
+</p>
+
 # CultureSpy 🕵️
 
 **Live:** [culture-spy.vercel.app](https://culture-spy.vercel.app)
@@ -122,7 +126,4 @@ The initial prototype was built in Google AI Studio for rapid iteration. The app
 
 ## Status
 
-Live at [culture-spy.vercel.app](https://culture-spy.vercel.app). Planned next:
-- [ ] Rate limiting per session
-- [ ] Sketch task support (canvas drawing)
-- [ ] PWA support for offline use
+Live at [culture-spy.vercel.app](https://culture-spy.vercel.app).

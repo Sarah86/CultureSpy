@@ -55,7 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.json(JSON.parse(response.text!));
   } catch (err: any) {
     console.error('DEBUG: Mission Error:', err);
+    
     const is404 = err.message?.includes('404') || err.message?.includes('Requested entity was not found');
-    res.status(is404 ? 404 : 500).json({ error: err.message });
+    const is429 = err.message?.includes('429') || err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('quota');
+    const status = is404 ? 404 : (is429 ? 429 : 500);
+    
+    res.status(status).json({ error: err.message });
   }
 }

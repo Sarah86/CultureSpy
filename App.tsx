@@ -66,7 +66,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'ENCRYPTING_MISSION_DATA',
     error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
     error_gps: 'GPS_LINK_FAILURE',
-    apiError: 'SATELLITE_CONGESTION: UPLINK_THROTTLED. RE-ESTABLISHING_IN_30S.',
+    apiError: 'FREE_UPLINK_LIMIT: SATELLITE_CONGESTION. RE-ESTABLISHING_IN_30S.',
     privacyLabel: 'PRIVACY_PROTOCOL',
     privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.'
   },
@@ -120,7 +120,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRITTOGRAFIA_MISSIONE',
     error_radar: 'RADAR DISTURBATO: NO DATI',
     error_gps: 'ERRORE_LINK_GPS',
-    apiError: 'CONGESTIONE_SATELLITE: UPLINK_LIMITATO. RICONNESSIONE_IN_30S.',
+    apiError: 'LIMITE_UPLINK_GRATUITO: CONGESTIONE_SATELLITE. RIPROVA_TRA_30S.',
     privacyLabel: 'PROTOCOLLO_PRIVACY',
     privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.'
   },
@@ -174,7 +174,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CHIFFREMENT_MISSION',
     error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
     error_gps: 'ERREUR_GPS',
-    apiError: 'CONGESTION_SATELLITE : LIAISON_RESTREINTE. RECONNEXION_DANS_30S.',
+    apiError: 'LIMITE_LIAISON_GRATUITE : CONGESTION_SATELLITE. RÉESSAYER_DANS_30S.',
     privacyLabel: 'PROTOCOLE_PRIVACY',
     privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD."
   },
@@ -215,7 +215,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     cipherSelect: 'CÓDIGO_COMM',
     proceed: 'PROSSEGUIR',
     uplinkRequired: 'Conexão Necessária',
-    noMissions: 'Nenhuma Missão Ativa Found',
+    noMissions: 'Nenhuma Missão Ativa',
     topSecret: 'CONFIDENCIAL',
     lvl: 'Nível',
     microTasks: 'MICRO_TAREFAS',
@@ -228,7 +228,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
     error_gps: 'FALHA_LINK_GPS',
-    apiError: 'CONGESTIONAMENTO_SATÉLITE: LINK_RESTRITO. RECONECTANDO_EM_30S.',
+    apiError: 'LIMITE_DE_LINK_GRATUITO: CONGESTIONAMENTO_SATÉLITE. RECONECTANDO_EM_30S.',
     privacyLabel: 'PROTOCOLO_PRIVACIDADE',
     privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.'
   }
@@ -308,6 +308,53 @@ const App: React.FC = () => {
     }));
   };
 
+  const formatApiError = (err: any, t: Translations): string => {
+    const errorMsg = err.message || (typeof err === 'string' ? err : '');
+    
+    const getRetrySeconds = (apiErr: any, msg: string): number => {
+      const details = Array.isArray(apiErr.details) ? apiErr.details : [];
+      const retryInfo = details.find((d: any) => d['@type']?.includes('RetryInfo'));
+      
+      const secondsFromDetails = retryInfo?.retryDelay?.match(/(\d+)/)?.[1];
+      if (secondsFromDetails) return parseInt(secondsFromDetails);
+
+      const secondsFromMsg = msg.match(/retry in ([\d.]+)/i)?.[1];
+      if (secondsFromMsg) return Math.floor(parseFloat(secondsFromMsg));
+
+      return 30; 
+    };
+
+    try {
+      const jsonStart = errorMsg.indexOf('{');
+      const apiErr = jsonStart !== -1 
+        ? (JSON.parse(errorMsg.substring(jsonStart)).error || JSON.parse(errorMsg.substring(jsonStart)))
+        : err;
+
+      const details = Array.isArray(apiErr.details) ? apiErr.details : [];
+      const isQuotaExceeded = details.some((d: any) => d['@type']?.includes('QuotaFailure')) || 
+                              apiErr.status === 'RESOURCE_EXHAUSTED' || 
+                              apiErr.code === 429;
+
+      if (isQuotaExceeded) {
+        return t.apiError.replace(/\d+S/i, `${getRetrySeconds(apiErr, errorMsg)}S`);
+      }
+    } catch (e) {
+      // JSON parse error, proceed to fallback
+    }
+
+    const isRateLimited = errorMsg.includes('429') || 
+                          errorMsg.includes('RESOURCE_EXHAUSTED') || 
+                          errorMsg.includes('quota');
+
+    if (isRateLimited) {
+      const match = errorMsg.match(/retry in ([\d.]+)s/i);
+      const seconds = match ? Math.floor(parseFloat(match[1])) : 30;
+      return t.apiError.replace(/\d+S/i, `${seconds}S`);
+    }
+    
+    return errorMsg.length > 100 ? t.apiError : (errorMsg || t.apiError);
+  };
+
   const handleSearchByName = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -356,7 +403,7 @@ const App: React.FC = () => {
       setIsScanning(false);
       setManualSearchInput('');
     } catch (err: any) {
-      setScanError(err.message || t.apiError);
+      setScanError(formatApiError(err, t));
     }
   };
 
@@ -400,7 +447,7 @@ const App: React.FC = () => {
       setView('SELECT_LOCATION');
       setIsScanning(false);
     } catch (err: any) {
-      setScanError(err.message || t.apiError);
+      setScanError(formatApiError(err, t));
     }
   };
 
@@ -485,7 +532,7 @@ const App: React.FC = () => {
         setShowKeySelection(true);
         setHasValidKey(false);
       }
-      setScanError(t.apiError);
+      setScanError(formatApiError(err, t));
     }
   };
 
