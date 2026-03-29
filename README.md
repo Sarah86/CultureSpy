@@ -33,11 +33,22 @@ CultureSpy reframes the visit as a covert operation. Each child becomes a spy ag
 | Area | Tech |
 |---|---|
 | Frontend | React 19, TypeScript |
-| Styling | Tailwind CSS |
-| AI | Google Gemini API (`gemini-3-flash-preview`) |
-| Location | Google Maps grounding via Gemini |
+| Styling | Tailwind CSS v4 |
+| Backend | Vercel Serverless Functions |
+| AI | Google Gemini API (`gemini-2.5-flash`) |
+| Tooling | Google Maps Tool (Grounding) via Gemini |
 | Build | Vite |
 | Deploy | Vercel |
+
+---
+
+## Is this "AI Agentic"? 🤖
+
+Yes. While many apps simply "chat" with AI, CultureSpy is **agentic** because it uses **Tool-Augmented Generation**:
+
+1.  **Tool Use**: The AI isn't just predicting text; it is actively **using the Google Maps tool** (grounding) to "see" the real world, verify locations, and retrieve live data about museums and landmarks.
+2.  **Structured Reasoning**: It takes raw geospatial data and "reasons" through it to generate a structured 10-part sensory mission based on the specific context of that location.
+3.  **Contextual Agency**: It acts as a bridge between the digital world and the physical world, making decisions on what tasks are appropriate for a specific "Agent" (the child) based on their rank and surroundings.
 
 ---
 
@@ -45,13 +56,17 @@ CultureSpy reframes the visit as a covert operation. Each child becomes a spy ag
 
 ```
 CultureSpy/
-├── App.tsx               # Main app — state, views, API calls
-├── components/
+├── api/                  # Vercel Serverless Functions (AI Logic)
+│   ├── mission.ts        # AI mission generation
+│   ├── scan.ts           # Location scanning with Google Maps tool
+│   └── search.ts         # Manual search with Google Maps tool
+├── App.tsx               # Main app UI and state management
+├── components/           # UI Components
 │   ├── MissionCard.tsx   # Mission list card
 │   ├── TaskItem.tsx      # Individual sensory task
 │   ├── TerminalText.tsx  # Typewriter text effect
 │   └── LocationScanner.tsx # Scanning overlay UI
-├── data.ts               # Mock missions (fallback / demo)
+├── data.ts               # Local cache / fallback data
 ├── types.ts              # TypeScript types
 └── index.tsx             # Entry point
 ```
@@ -71,18 +86,19 @@ CultureSpy/
 
 ## Running Locally
 
-**Prerequisites:** Node.js 18+
+**Prerequisites:** Node.js 18+, Vercel CLI (`npm i -g vercel`)
 
-```bash
-# Install dependencies
-npm install
-
-# Add your Gemini API key to .env.local
-echo "API_KEY=your_gemini_api_key" > .env.local
-
-# Start dev server
-npm run dev
-```
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **Set up Environment**:
+    Create a `.env` file in the root and add your `GEMINI_API_KEY`. The prompt templates are pre-configured in the repository's logic but can also be overridden via `.env`.
+3.  **Start Development Server**:
+    ```bash
+    vercel dev
+    ```
+    This runs both the Vite frontend and the Vercel serverless functions locally.
 
 Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
 
