@@ -8,6 +8,7 @@ import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
 import TerminalText from './components/TerminalText';
 import LocationScanner from './components/LocationScanner';
+import MissionComplete from './components/MissionComplete';
 
 interface NearbyTarget {
   name: string;
@@ -87,7 +88,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     error_gps: 'GPS_LINK_FAILURE',
     apiError: 'FREE_UPLINK_LIMIT: SATELLITE_CONGESTION. RE-ESTABLISHING_IN_30S.',
     privacyLabel: 'PRIVACY_PROTOCOL',
-    privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.'
+    privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.',
+    findNewMission: 'FIND_NEW_TARGET',
+    keepBrowsing: 'KEEP_BROWSING'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -141,7 +144,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     error_gps: 'ERRORE_LINK_GPS',
     apiError: 'LIMITE_UPLINK_GRATUITO: CONGESTIONE_SATELLITE. RIPROVA_TRA_30S.',
     privacyLabel: 'PROTOCOLLO_PRIVACY',
-    privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.'
+    privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.',
+    findNewMission: 'NUOVO_OBIETTIVO',
+    keepBrowsing: 'CONTINUA_A_ESPLORARE'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -195,7 +200,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     error_gps: 'ERREUR_GPS',
     apiError: 'LIMITE_LIAISON_GRATUITE : CONGESTION_SATELLITE. RÉESSAYER_DANS_30S.',
     privacyLabel: 'PROTOCOLE_PRIVACY',
-    privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD."
+    privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD.",
+    findNewMission: 'NOUVELLE_CIBLE',
+    keepBrowsing: 'CONTINUER_EXPLORATION'
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -249,7 +256,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     error_gps: 'FALHA_LINK_GPS',
     apiError: 'LIMITE_DE_LINK_GRATUITO: CONGESTIONAMENTO_SATÉLITE. RECONECTANDO_EM_30S.',
     privacyLabel: 'PROTOCOLO_PRIVACIDADE',
-    privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.'
+    privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.',
+    findNewMission: 'NOVO_ALVO',
+    keepBrowsing: 'CONTINUAR_EXPLORANDO'
   }
 };
 
@@ -273,6 +282,7 @@ const App: React.FC = () => {
   const [userCoords, setUserCoords] = useState<{lat: number, lng: number} | null>(null);
   const [showKeySelection, setShowKeySelection] = useState(false);
   const [hasValidKey, setHasValidKey] = useState(false);
+  const [completedMission, setCompletedMission] = useState<Mission | null>(null);
 
   const t = TRANSLATIONS[lang];
 
@@ -311,20 +321,21 @@ const App: React.FC = () => {
   };
 
   const toggleTask = (missionId: string, taskId: string) => {
-    setMissions(prevMissions => prevMissions.map(m => {
-      if (m.id === missionId) {
-        const newTasks = m.tasks.map(task => 
-          task.id === taskId ? { ...task, completed: !task.completed } : task
-        );
-        const allDone = newTasks.every(task => task.completed);
-        return { 
-          ...m, 
-          tasks: newTasks,
-          status: allDone ? 'COMPLETED' : 'ACTIVE'
-        };
-      }
-      return m;
-    }));
+    const mission = missions.find(m => m.id === missionId);
+    if (!mission) return;
+
+    const newTasks = mission.tasks.map(task =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    );
+    const allDone = newTasks.every(task => task.completed);
+    const wasCompleted = mission.status === 'COMPLETED';
+    const updatedMission: Mission = { ...mission, tasks: newTasks, status: allDone ? 'COMPLETED' : 'ACTIVE' };
+
+    setMissions(prevMissions => prevMissions.map(m => m.id === missionId ? updatedMission : m));
+
+    if (allDone && !wasCompleted) {
+      setCompletedMission(updatedMission);
+    }
   };
 
   const formatApiError = (err: any, t: Translations): string => {
@@ -581,6 +592,15 @@ const App: React.FC = () => {
         }}
         onClose={() => { setIsScanning(false); setScanError(undefined); }}
       />
+
+      {completedMission && (
+        <MissionComplete
+          mission={completedMission}
+          t={t}
+          onFindNew={() => { setCompletedMission(null); setView('HOME'); }}
+          onClose={() => setCompletedMission(null)}
+        />
+      )}
 
       {showKeySelection && (
         <div className="fixed inset-0 z-[200] bg-spyDark/95 backdrop-blur-md flex flex-col items-center justify-center p-10 text-center m-4 rounded-[40px] border-4 border-spyCyan glow-border animate-in zoom-in duration-300">

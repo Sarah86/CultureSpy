@@ -52,6 +52,8 @@ export interface Translations {
   apiError: string;
   privacyLabel: string;
   privacyInfo: string;
+  findNewMission: string;
+  keepBrowsing: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
