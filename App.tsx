@@ -717,12 +717,12 @@ const App: React.FC = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg font-black text-white leading-none uppercase tracking-tighter truncate">Spy_Squad</h1>
-              <div className="text-xs text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse whitespace-nowrap"><Activity size={10}/> {t.stealthOn}</div>
+              <div className="text-[10px] text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse whitespace-nowrap"><Activity size={10}/> {t.stealthOn}</div>
             </div>
           </div>
           <div className="bg-spySlate px-3 py-2 sm:px-4 rounded-2xl border-2 border-white/10 flex items-center gap-2 text-right flex-shrink-0">
             <div>
-               <span className="block text-xs font-black text-spyCyan uppercase leading-none mb-0.5 max-w-[80px] truncate">{agentName}</span>
+               <span className="block text-[10px] font-black text-spyCyan uppercase leading-none mb-0.5 max-w-[80px] truncate">{agentName}</span>
                <span className="text-sm font-black text-white tracking-widest leading-none whitespace-nowrap">{completedCount * 10} {t.xp}</span>
             </div>
             <Zap size={18} className="text-spyAmber animate-pulse" />
@@ -750,7 +750,7 @@ const App: React.FC = () => {
                     >
                       <div className="absolute inset-0 bg-spyPink/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       <span className="relative text-3xl font-black text-white group-hover:text-spyPink">{l}</span>
-                      <div className="absolute bottom-2 right-4 text-xs font-black text-white/20 uppercase tracking-[0.2em]">Ready</div>
+                      <div className="absolute bottom-2 right-4 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Ready</div>
                     </button>
                   ))}
                 </div>
@@ -776,7 +776,7 @@ const App: React.FC = () => {
                 <button onClick={() => setOnboardingStep('NAME')} className="w-full self-stretch bg-spyAmber text-black font-black py-6 rounded-3xl shadow-[0_8px_0_#b37b00] active:translate-y-2 active:shadow-none transition-all text-sm sm:text-xl uppercase tracking-normal sm:tracking-widest flex items-center justify-center gap-2 sm:gap-3 px-4 text-center">
                    {t.startInfiltration} <ChevronRight className="flex-shrink-0" />
                 </button>
-                <button type="button" onClick={() => setOnboardingStep('LANG')} className="mt-8 text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                <button type="button" onClick={() => setOnboardingStep('LANG')} className="mt-8 text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                   <ChevronLeft size={14}/> BACK_TO_CIPHER
                 </button>
               </div>
@@ -787,9 +787,9 @@ const App: React.FC = () => {
                 </div>
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.identityReq}</h2>
                 <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('AGE'); } }} className="space-y-6">
-                  <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-4 sm:px-8 text-lg sm:text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-wide sm:tracking-widest" autoFocus />
+                  <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest" autoFocus />
                   <button disabled={!tempName.trim()} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl">{t.confirmIdentity}</button>
-                  <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                  <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                     <ChevronLeft size={14}/> BACK_TO_BRIEFING
                   </button>
                 </form>
@@ -812,8 +812,8 @@ const App: React.FC = () => {
                       >
                         <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
-                          <span className={`text-xs font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
+                          <span className={`text-[11px] font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
                             {rank.name}
                           </span>
                         </div>
@@ -821,12 +821,12 @@ const App: React.FC = () => {
                     );
                   })}
                 </div>
-                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                    <ChevronLeft size={14}/> BACK_TO_IDENTITY
                 </button>
               </div>
             )}
-            <div className="mt-12 mb-4 text-xs text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+            <div className="mt-12 mb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
               Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
             </div>
           </div>
@@ -861,7 +861,7 @@ const App: React.FC = () => {
                       value={manualSearchInput}
                       onChange={(e) => setManualSearchInput(e.target.value)}
                       placeholder={t.searchPlaceholder}
-                      className="w-full bg-black/40 border-4 border-white/5 rounded-3xl py-4 pl-12 pr-6 font-black text-spyCyan uppercase tracking-wide sm:tracking-widest placeholder:text-white/10 focus:border-spyCyan/50 focus:outline-none transition-all text-sm"
+                      className="w-full bg-black/40 border-4 border-white/5 rounded-3xl py-4 pl-12 pr-6 font-black text-spyCyan uppercase tracking-widest placeholder:text-white/10 focus:border-spyCyan/50 focus:outline-none transition-all text-sm"
                     />
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-spyCyan transition-colors" size={20} />
                   </div>
@@ -923,12 +923,12 @@ const App: React.FC = () => {
                     <h3 className="text-2xl font-black text-white uppercase leading-tight mb-3 pr-10">{target.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mb-4">
                       {target.type && (
-                        <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-spyAmber bg-spyAmber/10 border border-spyAmber/20 px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyAmber bg-spyAmber/10 border border-spyAmber/20 px-3 py-1.5 rounded-full">
                           <Tag size={11} /> {target.type}
                         </span>
                       )}
                       {distanceKm !== null && (
-                        <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
                           <Navigation size={11} /> {formatDistance(distanceKm)}
                         </span>
                       )}
@@ -945,7 +945,7 @@ const App: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="relative z-10 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
+                      className="relative z-10 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
                     >
                       <ExternalLink size={12} /> {t.viewOnMaps}
                     </a>
@@ -988,11 +988,11 @@ const App: React.FC = () => {
                          {hasValidKey ? <ShieldCheck size={16} /> : <ShieldX size={16} />}
                       </div>
                    </div>
-                   <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-xs"><RefreshCw size={18} /> {t.updateKey}</button>
+                   <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-[10px]"><RefreshCw size={18} /> {t.updateKey}</button>
                 </div>
-                <button onClick={handleTerminateIdentity} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-xs tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
+                <button onClick={handleTerminateIdentity} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
              </div>
-                <div className="mt-10 pb-4 text-xs text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                <div className="mt-10 pb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                   Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
                 </div>
           </div>
@@ -1022,7 +1022,7 @@ const App: React.FC = () => {
               <div className="space-y-8 pb-10">
                 <div className="p-8 rounded-[40px] border-4 border-spyGreen/30 bg-spyGreen/5 relative overflow-hidden shadow-2xl shadow-spyGreen/10">
                   <div className="flex items-center gap-3 mb-6">
-                     <span className="bg-spyGreen text-black text-xs font-black px-3 py-1.5 rounded-lg">{t.topSecret}</span>
+                     <span className="bg-spyGreen text-black text-[10px] font-black px-3 py-1.5 rounded-lg">{t.topSecret}</span>
                      <span className="text-spyGreen text-xs font-black tracking-widest">{currentMission.codeName}</span>
                   </div>
                   <h2 className="text-4xl font-black text-white uppercase mb-4 leading-[0.9] tracking-tighter">{currentMission.title}</h2>
@@ -1030,7 +1030,7 @@ const App: React.FC = () => {
                   <div className="h-6 w-full bg-white/10 rounded-full overflow-hidden border-2 border-white/5 p-1">
                     <div className="h-full bg-spyGreen rounded-full transition-all duration-700 shadow-[0_0_25px_#00ff41]" style={{ width: `${progressPercent}%` }}></div>
                   </div>
-                  <div className="mt-4 flex justify-between text-xs font-black text-spyGreen uppercase tracking-widest">
+                  <div className="mt-4 flex justify-between text-[10px] font-black text-spyGreen uppercase tracking-widest">
                      <span className="flex items-center gap-2"><Sparkles size={14}/> {t.intelCaptured}</span>
                      <span>{currentMission.tasks.filter(tk => tk.completed).length} / {currentMission.tasks.length} {t.secured}</span>
                   </div>

@@ -30,14 +30,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, t, onToggle }) => {
           : 'bg-spySlate border-white/5 hover:border-spyCyan shadow-xl hover:shadow-spyCyan/10'}
       `}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <div className={`flex-shrink-0 w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all
           ${task.completed ? 'bg-spyGreen border-spyGreen text-black rotate-12' : 'border-white/10 text-white/40'}
         `}>
           {task.completed ? <Check size={28} strokeWidth={4} /> : <span>{getSensoryIcon(task.sensoryType)}</span>}
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pt-2">
           <p className={`text-lg font-black leading-snug uppercase tracking-tight transition-all
             ${task.completed ? 'text-spyGreen line-through opacity-50' : 'text-white'}
           `}>
@@ -46,7 +46,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, t, onToggle }) => {
         </div>
 
         {!task.completed && (
-          <div className="flex-shrink-0 animate-bounce">
+          <div className="flex-shrink-0 animate-bounce pt-2">
             <Zap size={18} className="text-spyAmber" />
           </div>
         )}
@@ -62,7 +62,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, t, onToggle }) => {
                DECRYPTED_INTEL
              </span>
           </div>
-          <p className={`text-sm font-bold italic leading-relaxed ${task.completed ? "text-white/60" : "text-white/40 group-hover:text-white/70"}`}>
+          <p className={`text-sm font-bold leading-relaxed ${task.completed ? "text-white/60" : "text-white/80"}`}>
             {task.curiosity}
           </p>
         </div>

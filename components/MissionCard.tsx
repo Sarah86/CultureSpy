@@ -35,7 +35,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
     >
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col flex-1 min-w-0 pr-4">
-          <span className="text-xs tracking-[0.3em] opacity-50 mb-2 font-black uppercase flex items-center gap-2">
+          <span className="text-[10px] tracking-[0.3em] opacity-50 mb-2 font-black uppercase flex items-center gap-2">
             <Target size={12} /> ID: {mission.codeName}
           </span>
           <h3 className="text-2xl font-black leading-[0.9] uppercase tracking-tighter text-white group-hover:text-spyCyan transition-colors">{mission.title}</h3>
@@ -64,7 +64,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
             className={`${i < mission.difficulty ? 'text-spyAmber fill-spyAmber' : 'text-white/10'} group-hover:scale-110 transition-transform`} 
           />
         ))}
-        <span className="text-xs ml-3 tracking-widest font-black uppercase text-white/40">{t.lvl} {mission.difficulty}</span>
+        <span className="text-[10px] ml-3 tracking-widest font-black uppercase text-white/40">{t.lvl} {mission.difficulty}</span>
       </div>
 
       <div className="flex justify-between items-end">
@@ -74,7 +74,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
                 <div key={idx} className={`w-2 h-2 rounded-full border border-white/10 ${task.completed ? 'bg-spyGreen shadow-[0_0_8px_#00ff41]' : 'bg-white/5'}`}></div>
               ))}
            </div>
-           <div className="text-xs font-black uppercase tracking-widest">
+           <div className="text-[11px] font-black uppercase tracking-widest">
             {isCompleted ? (
               <span className="text-spyGreen flex items-center gap-1"><Sparkles size={12}/> {t.dataCached}</span>
             ) : isActive ? (
@@ -84,7 +84,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm font-black uppercase text-spyCyan opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
+        <div className="flex items-center gap-2 text-xs font-black uppercase text-spyCyan opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
           {t.infiltrate} <ChevronRight size={20} />
         </div>
       </div>
