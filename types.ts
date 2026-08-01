@@ -55,6 +55,11 @@ export interface Translations {
   findNewMission: string;
   keepBrowsing: string;
   viewOnMaps: string;
+  deleteMission: string;
+  confirmDeleteTitle: string;
+  confirmDeleteBody: string;
+  cancel: string;
+  stepOf: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';

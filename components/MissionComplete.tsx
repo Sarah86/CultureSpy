@@ -48,12 +48,12 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ mission, t, onFindNew
         <span className="text-2xl font-black text-white">+{xpEarned} {t.xp}</span>
       </div>
 
-      <div className="flex flex-col gap-4 w-full max-w-xs">
+      <div className="flex flex-col gap-4 w-full max-w-xs self-stretch">
         <button
           onClick={onFindNew}
-          className="w-full bg-spyGreen text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#008f24] active:translate-y-2 active:shadow-none transition-all text-lg uppercase tracking-widest flex items-center justify-center gap-3"
+          className="w-full bg-spyGreen text-black font-black py-5 px-4 rounded-3xl shadow-[0_8px_0_#008f24] active:translate-y-2 active:shadow-none transition-all text-xs sm:text-lg uppercase tracking-normal sm:tracking-widest flex items-center justify-center gap-2 sm:gap-3 text-center"
         >
-          <Star size={22} /> {t.findNewMission} <ChevronRight />
+          <Star size={20} className="flex-shrink-0" /> {t.findNewMission} <ChevronRight className="flex-shrink-0" />
         </button>
         <button
           onClick={onClose}
