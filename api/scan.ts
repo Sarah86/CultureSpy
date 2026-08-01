@@ -21,6 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
+        thinkingConfig: { thinkingBudget: 0 },
         tools: [{ googleMaps: {} }] as any,
         toolConfig: { retrievalConfig: { latLng: { latitude: lat, longitude: lng } } } as any
       }

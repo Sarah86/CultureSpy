@@ -374,7 +374,7 @@ const App: React.FC = () => {
       let latLng = undefined;
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 1500, maximumAge: 60000 });
         });
         latLng = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
       } catch(e) {
@@ -416,9 +416,10 @@ const App: React.FC = () => {
     try {
       setScanStatus(t.status_searching);
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { 
-          enableHighAccuracy: true,
-          timeout: 10000 
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 60000
         });
       });
 
