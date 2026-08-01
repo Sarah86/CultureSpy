@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .replace(/\${lat}/g, lat.toString())
     .replace(/\${lng}/g, lng.toString())
     .replace(/\${langLabel}/g, langLabel)
-    + '\n\nFor each result, also include: numeric "lat" and "lng" fields with that location\'s precise coordinates, and an "address" field with its full street address.';
+    + `\n\nOrder the results from nearest to farthest walking distance from the origin point (${lat}, ${lng}) — this is critical, do not list far-away places first. For each result, also include: a numeric "lat" and "lng" field with that exact place's real coordinates as known from Google Maps (never estimate or guess — omit the fields instead of guessing if you are not sure), and an "address" field with its full street address.`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });

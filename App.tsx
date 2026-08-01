@@ -38,6 +38,11 @@ const sortByDistance = (targets: NearbyTarget[], origin: { lat: number; lng: num
 
 const formatDistance = (km: number): string => km < 1 ? `${Math.round(km * 1000)} M` : `${km.toFixed(1)} KM`;
 
+const getGoogleMapsUrl = (target: NearbyTarget): string => {
+  const query = [target.name, target.address].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
 const TRANSLATIONS: Record<Language, Translations> = {
   EN: {
     selectCipher: 'SELECT COMMUNICATION CIPHER',
@@ -93,7 +98,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyLabel: 'PRIVACY_PROTOCOL',
     privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.',
     findNewMission: 'FIND_NEW_TARGET',
-    keepBrowsing: 'KEEP_BROWSING'
+    keepBrowsing: 'KEEP_BROWSING',
+    viewOnMaps: 'VIEW_ON_MAPS'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -149,7 +155,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyLabel: 'PROTOCOLLO_PRIVACY',
     privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.',
     findNewMission: 'NUOVO_OBIETTIVO',
-    keepBrowsing: 'CONTINUA_A_ESPLORARE'
+    keepBrowsing: 'CONTINUA_A_ESPLORARE',
+    viewOnMaps: 'VEDI_SU_MAPS'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -205,7 +212,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyLabel: 'PROTOCOLE_PRIVACY',
     privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD.",
     findNewMission: 'NOUVELLE_CIBLE',
-    keepBrowsing: 'CONTINUER_EXPLORATION'
+    keepBrowsing: 'CONTINUER_EXPLORATION',
+    viewOnMaps: 'VOIR_SUR_MAPS'
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -261,7 +269,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyLabel: 'PROTOCOLO_PRIVACIDADE',
     privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.',
     findNewMission: 'NOVO_ALVO',
-    keepBrowsing: 'CONTINUAR_EXPLORANDO'
+    keepBrowsing: 'CONTINUAR_EXPLORANDO',
+    viewOnMaps: 'VER_NO_MAPS'
   }
 };
 
@@ -821,7 +830,14 @@ const App: React.FC = () => {
                   ? getDistanceKm(searchOrigin.lat, searchOrigin.lng, target.lat, target.lng)
                   : null;
                 return (
-                  <button key={idx} onClick={() => handleSelectTarget(target)} className="w-full text-left bg-spySlate p-8 rounded-[40px] border-4 border-white/5 hover:border-spyCyan hover:scale-[1.03] active:scale-95 transition-all relative overflow-hidden group shadow-2xl">
+                  <div
+                    key={idx}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSelectTarget(target)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectTarget(target); }}
+                    className="w-full text-left bg-spySlate p-8 rounded-[40px] border-4 border-white/5 hover:border-spyCyan hover:scale-[1.03] active:scale-95 transition-all relative overflow-hidden group shadow-2xl cursor-pointer"
+                  >
                     <span className="text-xs text-spyCyan font-black uppercase mb-3 block tracking-[0.3em]">TGT_{idx+1}</span>
                     <h3 className="text-2xl font-black text-white uppercase leading-tight mb-3 pr-10">{target.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -838,13 +854,22 @@ const App: React.FC = () => {
                     </div>
                     <p className="text-sm text-white/60 font-bold italic leading-relaxed mb-4">{target.description}</p>
                     {target.address && (
-                      <div className="flex items-start gap-2 text-xs text-white/40 font-bold">
+                      <div className="flex items-start gap-2 text-xs text-white/40 font-bold mb-4">
                         <MapPin size={14} className="flex-shrink-0 mt-0.5 text-spyCyan" />
                         <span>{target.address}</span>
                       </div>
                     )}
+                    <a
+                      href={getGoogleMapsUrl(target)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-10 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
+                    >
+                      <ExternalLink size={12} /> {t.viewOnMaps}
+                    </a>
                     <div className="absolute top-1/2 -translate-y-1/2 right-6 p-4 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 transform"><ChevronRight size={32} className="text-spyCyan" /></div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

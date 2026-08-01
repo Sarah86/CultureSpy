@@ -54,6 +54,7 @@ export interface Translations {
   privacyInfo: string;
   findNewMission: string;
   keepBrowsing: string;
+  viewOnMaps: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';

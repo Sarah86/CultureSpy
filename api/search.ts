@@ -13,10 +13,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!query) return res.status(400).json({ error: 'Missing query' });
 
   const langLabel = lang === 'PT' ? 'Português do Brasil' : lang;
+  const orderHint = latLng
+    ? `Order the results from nearest to farthest walking distance from the origin point (${latLng.latitude}, ${latLng.longitude}) — this is critical, do not list far-away places first. `
+    : '';
   const prompt = (process.env.AI_PROMPT_SEARCH || '')
     .replace(/\${query}/g, query)
     .replace(/\${langLabel}/g, langLabel)
-    + '\n\nFor each result, also include: numeric "lat" and "lng" fields with that location\'s precise coordinates, and an "address" field with its full street address.';
+    + `\n\n${orderHint}For each result, also include: a numeric "lat" and "lng" field with that exact place's real coordinates as known from Google Maps (never estimate or guess — omit the fields instead of guessing if you are not sure), and an "address" field with its full street address.`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
