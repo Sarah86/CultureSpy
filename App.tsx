@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language, Translations } from './types';
+import { storage } from './storage';
 import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
 import TerminalText from './components/TerminalText';
@@ -276,16 +277,21 @@ const TRANSLATIONS: Record<Language, Translations> = {
 
 const App: React.FC = () => {
   const [showPrivacy, setShowPrivacy] = React.useState(false);
-  const [lang, setLang] = useState<Language>('EN');
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [lang, setLang] = useState<Language>(() => storage.getProfile()?.lang ?? 'EN');
+  const [missions, setMissions] = useState<Mission[]>(() => {
+    const saved = storage.getMissions();
+    return saved && saved.length > 0 ? saved : getLocalizedMockMissions(storage.getProfile()?.lang ?? 'EN');
+  });
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
-  const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>('ONBOARDING');
-  const [agentName, setAgentName] = useState('');
+  const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>(
+    () => storage.getProfile() ? 'HOME' : 'ONBOARDING'
+  );
+  const [agentName, setAgentName] = useState(() => storage.getProfile()?.name ?? '');
   const [tempName, setTempName] = useState('');
   const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'INTRO' | 'NAME' | 'AGE'>('LANG');
-  const [agentAge, setAgentAge] = useState<number | null>(null);
+  const [agentAge, setAgentAge] = useState<number | null>(() => storage.getProfile()?.age ?? null);
   const [manualSearchInput, setManualSearchInput] = useState('');
-  
+
   const [isScanning, setIsScanning] = useState(false);
   const [lastTarget, setLastTarget] = useState<NearbyTarget | null>(null);
   const [scanStatus, setScanStatus] = useState('');
@@ -301,8 +307,19 @@ const App: React.FC = () => {
 
   useEffect(() => {
     checkKeyStatus();
-    setMissions(getLocalizedMockMissions(lang));
-  }, [lang]);
+  }, []);
+
+  // Persist missions (progress, evidence, completion) so a reload doesn't lose them.
+  useEffect(() => {
+    storage.saveMissions(missions);
+  }, [missions]);
+
+  // Persist the agent's profile once onboarding is complete, and keep it in sync with language changes.
+  useEffect(() => {
+    if (agentName && agentAge) {
+      storage.saveProfile({ name: agentName, age: agentAge, lang });
+    }
+  }, [agentName, agentAge, lang]);
 
   const checkKeyStatus = async () => {
     if (window.aistudio) {
@@ -331,6 +348,16 @@ const App: React.FC = () => {
   const handleManualBypass = () => {
     setShowKeySelection(false);
     setHasValidKey(true);
+  };
+
+  const handleTerminateIdentity = () => {
+    storage.clearAll();
+    setAgentName('');
+    setAgentAge(null);
+    setMissions([]);
+    setActiveMissionId(null);
+    setView('ONBOARDING');
+    setOnboardingStep('LANG');
   };
 
   const toggleTask = (missionId: string, taskId: string) => {
@@ -501,8 +528,8 @@ const App: React.FC = () => {
 
   const handleRegenerateMission = () => {
     if (!lastTarget) return;
-    const cacheKey = `culturespy_mission_${lastTarget.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
-    localStorage.removeItem(cacheKey);
+    const cacheKey = `${lastTarget.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
+    storage.clearMissionCache(cacheKey);
     handleSelectTarget(lastTarget);
   };
 
@@ -514,18 +541,17 @@ const App: React.FC = () => {
     setScanStatus(t.status_encrypting);
 
     try {
-      // Check localStorage cache first — same location + language = same mission, zero API cost
-      const cacheKey = `culturespy_mission_${target.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const data = JSON.parse(cached);
+      // Check the mission cache first — same location + language = same mission, zero API cost
+      const cacheKey = `${target.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
+      const cachedMission = storage.getMissionCache<any>(cacheKey);
+      if (cachedMission) {
         const newMission: Mission = {
-          ...data,
+          ...cachedMission,
           id: `gen-${Date.now()}`,
           status: 'PENDING',
           isLocked: false,
           category: 'ART',
-          tasks: (data.tasks || []).map((task: any, i: number) => ({
+          tasks: (cachedMission.tasks || []).map((task: any, i: number) => ({
             ...task,
             id: `t-${i}-${Date.now()}`,
             completed: false
@@ -556,7 +582,7 @@ const App: React.FC = () => {
       const data = await apiRes.json();
 
       // Save to cache so the same location never triggers another API call
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      storage.saveMissionCache(cacheKey, data);
 
       const newMission: Mission = {
         ...data,
@@ -909,7 +935,7 @@ const App: React.FC = () => {
                    </div>
                    <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-[10px]"><RefreshCw size={18} /> {t.updateKey}</button>
                 </div>
-                <button onClick={() => { setView('ONBOARDING'); setOnboardingStep('LANG'); }} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
+                <button onClick={handleTerminateIdentity} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
              </div>
                 <div className="mt-10 pb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                   Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>

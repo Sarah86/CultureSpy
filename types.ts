@@ -89,3 +89,9 @@ export interface Mission {
   isLocked: boolean;
   status: 'PENDING' | 'ACTIVE' | 'COMPLETED';
 }
+
+export interface AgentProfile {
+  name: string;
+  age: number;
+  lang: Language;
+}
