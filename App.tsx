@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info } from 'lucide-react';
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language, Translations } from './types';
 import MissionCard from './components/MissionCard';
@@ -14,6 +14,7 @@ interface NearbyTarget {
   name: string;
   type: string;
   description: string;
+  address?: string;
   lat?: number;
   lng?: number;
 }
@@ -34,6 +35,8 @@ const sortByDistance = (targets: NearbyTarget[], origin: { lat: number; lng: num
     return da - db;
   });
 };
+
+const formatDistance = (km: number): string => km < 1 ? `${Math.round(km * 1000)} M` : `${km.toFixed(1)} KM`;
 
 const TRANSLATIONS: Record<Language, Translations> = {
   EN: {
@@ -280,6 +283,7 @@ const App: React.FC = () => {
   const [scanError, setScanError] = useState<string | undefined>(undefined);
   const [detectedTargets, setDetectedTargets] = useState<NearbyTarget[]>([]);
   const [userCoords, setUserCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState<{lat: number, lng: number} | null>(null);
   const [showKeySelection, setShowKeySelection] = useState(false);
   const [hasValidKey, setHasValidKey] = useState(false);
   const [completedMission, setCompletedMission] = useState<Mission | null>(null);
@@ -429,6 +433,7 @@ const App: React.FC = () => {
 
       const { targets } = await res.json();
       const origin = latLng ? { lat: latLng.latitude, lng: latLng.longitude } : null;
+      setSearchOrigin(origin);
       setDetectedTargets(sortByDistance(targets, origin));
       setView('SELECT_LOCATION');
       setIsScanning(false);
@@ -475,7 +480,9 @@ const App: React.FC = () => {
       }
 
       const { targets } = await res.json();
-      setDetectedTargets(sortByDistance(targets, { lat: latitude, lng: longitude }));
+      const origin = { lat: latitude, lng: longitude };
+      setSearchOrigin(origin);
+      setDetectedTargets(sortByDistance(targets, origin));
       setView('SELECT_LOCATION');
       setIsScanning(false);
     } catch (err: any) {
@@ -809,14 +816,37 @@ const App: React.FC = () => {
                </div>
             </div>
             <div className="space-y-5">
-              {detectedTargets.map((target, idx) => (
-                <button key={idx} onClick={() => handleSelectTarget(target)} className="w-full text-left bg-spySlate p-8 rounded-[40px] border-4 border-white/5 hover:border-spyCyan hover:scale-[1.03] active:scale-95 transition-all relative overflow-hidden group shadow-2xl">
-                  <span className="text-xs text-spyCyan font-black uppercase mb-3 block tracking-[0.3em]">TGT_{idx+1}</span>
-                  <h3 className="text-2xl font-black text-white uppercase leading-tight mb-3">{target.name}</h3>
-                  <p className="text-sm text-white/60 font-bold italic leading-relaxed">{target.description}</p>
-                  <div className="absolute top-1/2 -translate-y-1/2 right-6 p-4 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 transform"><ChevronRight size={32} className="text-spyCyan" /></div>
-                </button>
-              ))}
+              {detectedTargets.map((target, idx) => {
+                const distanceKm = searchOrigin && typeof target.lat === 'number' && typeof target.lng === 'number'
+                  ? getDistanceKm(searchOrigin.lat, searchOrigin.lng, target.lat, target.lng)
+                  : null;
+                return (
+                  <button key={idx} onClick={() => handleSelectTarget(target)} className="w-full text-left bg-spySlate p-8 rounded-[40px] border-4 border-white/5 hover:border-spyCyan hover:scale-[1.03] active:scale-95 transition-all relative overflow-hidden group shadow-2xl">
+                    <span className="text-xs text-spyCyan font-black uppercase mb-3 block tracking-[0.3em]">TGT_{idx+1}</span>
+                    <h3 className="text-2xl font-black text-white uppercase leading-tight mb-3 pr-10">{target.name}</h3>
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      {target.type && (
+                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyAmber bg-spyAmber/10 border border-spyAmber/20 px-3 py-1.5 rounded-full">
+                          <Tag size={11} /> {target.type}
+                        </span>
+                      )}
+                      {distanceKm !== null && (
+                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
+                          <Navigation size={11} /> {formatDistance(distanceKm)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-white/60 font-bold italic leading-relaxed mb-4">{target.description}</p>
+                    {target.address && (
+                      <div className="flex items-start gap-2 text-xs text-white/40 font-bold">
+                        <MapPin size={14} className="flex-shrink-0 mt-0.5 text-spyCyan" />
+                        <span>{target.address}</span>
+                      </div>
+                    )}
+                    <div className="absolute top-1/2 -translate-y-1/2 right-6 p-4 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 transform"><ChevronRight size={32} className="text-spyCyan" /></div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : view === 'SETTINGS' ? (

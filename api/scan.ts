@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .replace(/\${lat}/g, lat.toString())
     .replace(/\${lng}/g, lng.toString())
     .replace(/\${langLabel}/g, langLabel)
-    + '\n\nFor each result, also include numeric "lat" and "lng" fields with that location\'s precise coordinates.';
+    + '\n\nFor each result, also include: numeric "lat" and "lng" fields with that location\'s precise coordinates, and an "address" field with its full street address.';
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
