@@ -77,7 +77,7 @@ const LocationScanner: React.FC<LocationScannerProps> = ({ isScanning, statusTex
                 </button>
                 <button 
                   onClick={onClose}
-                  className="bg-white/10 text-white/60 font-black py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/20 transition-all text-xs uppercase"
+                  className="bg-white/10 text-white/60 font-black py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/20 transition-all text-[10px] uppercase"
                 >
                   <XCircle size={14} /> ABORT_SCAN
                 </button>
@@ -96,7 +96,7 @@ const LocationScanner: React.FC<LocationScannerProps> = ({ isScanning, statusTex
           </div>
         )}
         
-        {!error && <p className="text-xs text-white/30 font-black uppercase tracking-[0.4em]">Calibrating Secret Sauce...</p>}
+        {!error && <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.4em]">Calibrating Secret Sauce...</p>}
       </div>
 
       <style>{`
