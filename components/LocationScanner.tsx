@@ -50,7 +50,7 @@ const LocationScanner: React.FC<LocationScannerProps> = ({ isScanning, statusTex
         <div className="absolute -bottom-4 -left-4 animate-bounce delay-150"><Zap className={error ? "text-spyRed" : "text-spyCyan"} size={24}/></div>
       </div>
 
-      <div className="max-w-xs w-full space-y-6">
+      <div className="max-w-xs w-full self-stretch space-y-6">
         <div className="space-y-2">
           <h2 className={`font-black text-3xl tracking-tighter uppercase italic ${error ? 'text-spyRed' : 'text-spyCyan'}`}>
             {error ? 'RADAR_CRASHED' : 'MEGA_SCANNER'}
@@ -77,7 +77,7 @@ const LocationScanner: React.FC<LocationScannerProps> = ({ isScanning, statusTex
                 </button>
                 <button 
                   onClick={onClose}
-                  className="bg-white/10 text-white/60 font-black py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/20 transition-all text-[10px] uppercase"
+                  className="bg-white/10 text-white/60 font-black py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-white/20 transition-all text-xs uppercase"
                 >
                   <XCircle size={14} /> ABORT_SCAN
                 </button>
@@ -96,7 +96,7 @@ const LocationScanner: React.FC<LocationScannerProps> = ({ isScanning, statusTex
           </div>
         )}
         
-        {!error && <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.4em]">Calibrating Secret Sauce...</p>}
+        {!error && <p className="text-xs text-white/30 font-black uppercase tracking-[0.4em]">Calibrating Secret Sauce...</p>}
       </div>
 
       <style>{`

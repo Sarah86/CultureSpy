@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag } from 'lucide-react';
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag, Trash2 } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language, Translations } from './types';
 import { storage } from './storage';
@@ -100,7 +100,12 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyInfo: 'We use Vercel Analytics to improve the service. No personal data or cookies are collected. GDPR compliant.',
     findNewMission: 'FIND_NEW_TARGET',
     keepBrowsing: 'KEEP_BROWSING',
-    viewOnMaps: 'VIEW_ON_MAPS'
+    viewOnMaps: 'VIEW_ON_MAPS',
+    deleteMission: 'Delete Mission',
+    confirmDeleteTitle: 'Delete this mission?',
+    confirmDeleteBody: 'All progress on this mission will be lost. This cannot be undone.',
+    cancel: 'Cancel',
+    stepOf: 'Step'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -157,7 +162,12 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyInfo: 'Usiamo Vercel Analytics per migliorare il servizio. Non vengono raccolti dati personali o cookie. Conforme al GDPR.',
     findNewMission: 'NUOVO_OBIETTIVO',
     keepBrowsing: 'CONTINUA_A_ESPLORARE',
-    viewOnMaps: 'VEDI_SU_MAPS'
+    viewOnMaps: 'VEDI_SU_MAPS',
+    deleteMission: 'Elimina Missione',
+    confirmDeleteTitle: 'Eliminare questa missione?',
+    confirmDeleteBody: 'Tutti i progressi su questa missione andranno persi. Non si può annullare.',
+    cancel: 'Annulla',
+    stepOf: 'Passo'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -214,7 +224,12 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyInfo: "Nous utilisons Vercel Analytics pour améliorer le service. Aucune donnée personnelle ou cookie n'est collecté. Conforme au RGPD.",
     findNewMission: 'NOUVELLE_CIBLE',
     keepBrowsing: 'CONTINUER_EXPLORATION',
-    viewOnMaps: 'VOIR_SUR_MAPS'
+    viewOnMaps: 'VOIR_SUR_MAPS',
+    deleteMission: 'Supprimer la mission',
+    confirmDeleteTitle: 'Supprimer cette mission ?',
+    confirmDeleteBody: 'Toute la progression sur cette mission sera perdue. Action irréversible.',
+    cancel: 'Annuler',
+    stepOf: 'Étape'
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -271,7 +286,12 @@ const TRANSLATIONS: Record<Language, Translations> = {
     privacyInfo: 'Usamos o Vercel Analytics para melhorar o serviço. Não são coletados dados pessoais ou cookies. Em conformidade com o RGPD.',
     findNewMission: 'NOVO_ALVO',
     keepBrowsing: 'CONTINUAR_EXPLORANDO',
-    viewOnMaps: 'VER_NO_MAPS'
+    viewOnMaps: 'VER_NO_MAPS',
+    deleteMission: 'Excluir Missão',
+    confirmDeleteTitle: 'Excluir esta missão?',
+    confirmDeleteBody: 'Todo o progresso nesta missão será perdido. Essa ação não pode ser desfeita.',
+    cancel: 'Cancelar',
+    stepOf: 'Passo'
   }
 };
 
@@ -302,6 +322,7 @@ const App: React.FC = () => {
   const [showKeySelection, setShowKeySelection] = useState(false);
   const [hasValidKey, setHasValidKey] = useState(false);
   const [completedMission, setCompletedMission] = useState<Mission | null>(null);
+  const [missionToDelete, setMissionToDelete] = useState<Mission | null>(null);
 
   const t = TRANSLATIONS[lang];
 
@@ -358,6 +379,16 @@ const App: React.FC = () => {
     setActiveMissionId(null);
     setView('ONBOARDING');
     setOnboardingStep('LANG');
+  };
+
+  const handleConfirmDeleteMission = () => {
+    if (!missionToDelete) return;
+    setMissions(prev => prev.filter(m => m.id !== missionToDelete.id));
+    if (activeMissionId === missionToDelete.id) {
+      setActiveMissionId(null);
+      setView('HOME');
+    }
+    setMissionToDelete(null);
   };
 
   const toggleTask = (missionId: string, taskId: string) => {
@@ -613,6 +644,8 @@ const App: React.FC = () => {
   const currentMission = activeMissionId ? missions.find(m => m.id === activeMissionId) : null;
   const completedCount = missions.reduce((acc, m) => acc + m.tasks.filter(tk => tk.completed).length, 0);
   const progressPercent = currentMission ? (currentMission.tasks.filter(tk => tk.completed).length / currentMission.tasks.length) * 100 : 0;
+  const activeTaskIndex = currentMission ? currentMission.tasks.findIndex(tk => !tk.completed) : -1;
+  const activeTask = activeTaskIndex >= 0 ? currentMission!.tasks[activeTaskIndex] : null;
 
   const getRankInfo = (age: number) => {
     if (age <= 8) return { name: t.rankRookie, color: 'spyGreen' };
@@ -644,12 +677,28 @@ const App: React.FC = () => {
         />
       )}
 
+      {missionToDelete && (
+        <div className="fixed inset-0 z-[200] bg-spyDark/95 backdrop-blur-md flex flex-col items-center justify-center p-10 text-center m-4 rounded-[40px] border-4 border-spyRed animate-in zoom-in duration-300">
+          <Trash2 size={56} className="text-spyRed mb-6" />
+          <h2 className="text-2xl font-black text-white uppercase mb-4 tracking-tighter leading-tight">{t.confirmDeleteTitle}</h2>
+          <p className="text-base text-white/60 mb-8 leading-relaxed px-2">{t.confirmDeleteBody}</p>
+          <div className="flex flex-col gap-4 w-full self-stretch">
+            <button onClick={handleConfirmDeleteMission} className="w-full bg-spyRed text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#a11f1f] active:translate-y-2 active:shadow-none transition-all text-lg uppercase tracking-widest flex items-center justify-center gap-3">
+              <Trash2 size={20} /> {t.deleteMission}
+            </button>
+            <button onClick={() => setMissionToDelete(null)} className="w-full bg-white/10 text-white/70 font-black py-4 rounded-3xl hover:bg-white/20 transition-all text-base uppercase tracking-widest">
+              {t.cancel}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showKeySelection && (
         <div className="fixed inset-0 z-[200] bg-spyDark/95 backdrop-blur-md flex flex-col items-center justify-center p-10 text-center m-4 rounded-[40px] border-4 border-spyCyan glow-border animate-in zoom-in duration-300">
           <Key size={60} className="text-spyCyan mb-6 animate-bounce" />
           <h2 className="text-3xl font-black text-white uppercase mb-4 tracking-tighter leading-none">{t.uplinkRequired}</h2>
           <p className="text-sm text-white/60 mb-8 font-mono leading-relaxed px-4 italic">{t.satelliteDesc}</p>
-          <div className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col gap-4 w-full self-stretch">
             <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl uppercase tracking-widest flex items-center justify-center gap-3">
               <Key size={24} /> SELECT_KEY
             </button>
@@ -661,20 +710,20 @@ const App: React.FC = () => {
       )}
 
       {view !== 'ONBOARDING' && (
-        <header className="sticky top-0 z-50 bg-spyDark/80 backdrop-blur-xl border-b-2 border-white/10 p-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-spyCyan to-spyPink text-black flex items-center justify-center rounded-2xl shadow-lg transform -rotate-3 hover:rotate-0 transition-transform">
-              <Ghost size={28} />
+        <header className="sticky top-0 z-50 bg-spyDark/80 backdrop-blur-xl border-b-2 border-white/10 px-3 py-3 sm:p-4 flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-gradient-to-br from-spyCyan to-spyPink text-black flex items-center justify-center rounded-2xl shadow-lg transform -rotate-3 hover:rotate-0 transition-transform">
+              <Ghost size={24} />
             </div>
-            <div>
-              <h1 className="text-lg font-black text-white leading-none uppercase tracking-tighter">Spy_Squad</h1>
-              <div className="text-[10px] text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse"><Activity size={10}/> {t.stealthOn}</div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-black text-white leading-none uppercase tracking-tighter truncate">Spy_Squad</h1>
+              <div className="text-xs text-spyCyan font-black tracking-widest uppercase flex items-center gap-1 animate-pulse whitespace-nowrap"><Activity size={10}/> {t.stealthOn}</div>
             </div>
           </div>
-          <div className="bg-spySlate px-4 py-2 rounded-2xl border-2 border-white/10 flex items-center gap-2 text-right">
+          <div className="bg-spySlate px-3 py-2 sm:px-4 rounded-2xl border-2 border-white/10 flex items-center gap-2 text-right flex-shrink-0">
             <div>
-               <span className="block text-[10px] font-black text-spyCyan uppercase leading-none mb-0.5">{agentName}</span>
-               <span className="text-sm font-black text-white tracking-widest leading-none">{completedCount * 10} {t.xp}</span>
+               <span className="block text-xs font-black text-spyCyan uppercase leading-none mb-0.5 max-w-[80px] truncate">{agentName}</span>
+               <span className="text-sm font-black text-white tracking-widest leading-none whitespace-nowrap">{completedCount * 10} {t.xp}</span>
             </div>
             <Zap size={18} className="text-spyAmber animate-pulse" />
           </div>
@@ -685,7 +734,7 @@ const App: React.FC = () => {
         {view === 'ONBOARDING' ? (
           <div className="h-full flex flex-col items-center justify-center py-10 animate-in zoom-in duration-500">
             {onboardingStep === 'LANG' ? (
-              <div className="w-full px-4 animate-in slide-in-from-bottom-10">
+              <div className="w-full self-stretch px-4 animate-in slide-in-from-bottom-10">
                 <div className="w-24 h-24 bg-spyPink/20 mx-auto flex items-center justify-center rounded-[30px] mb-10 border-4 border-spyPink shadow-[0_0_40px_rgba(255,0,122,0.3)] animate-pulse">
                   <Languages size={48} className="text-spyPink" />
                 </div>
@@ -701,20 +750,20 @@ const App: React.FC = () => {
                     >
                       <div className="absolute inset-0 bg-spyPink/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       <span className="relative text-3xl font-black text-white group-hover:text-spyPink">{l}</span>
-                      <div className="absolute bottom-2 right-4 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Ready</div>
+                      <div className="absolute bottom-2 right-4 text-xs font-black text-white/20 uppercase tracking-[0.2em]">Ready</div>
                     </button>
                   ))}
                 </div>
               </div>
             ) : onboardingStep === 'INTRO' ? (
-              <div className="w-full px-4 animate-in slide-in-from-right-10 flex flex-col h-full items-center justify-center">
+              <div className="w-full self-stretch px-4 animate-in slide-in-from-right-10 flex flex-col h-full items-center justify-center">
                 <div className="w-32 h-32 bg-spyAmber/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyAmber shadow-[0_0_40px_rgba(255,176,0,0.3)] relative overflow-hidden group">
                   <Shield size={64} className="text-spyAmber relative z-10 group-hover:scale-110 transition-transform" />
                   <div className="absolute inset-0 bg-spyAmber/10 animate-ping"></div>
                 </div>
-                <div className="bg-spySlate/50 border-4 border-white/5 rounded-[40px] p-8 mb-10 relative overflow-hidden">
+                <div className="w-full self-stretch bg-spySlate/50 border-4 border-white/5 rounded-[40px] p-8 mb-10 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-10"><Info size={40} /></div>
-                  <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-6 leading-none border-b-2 border-spyAmber pb-4 inline-block">{t.briefingTitle}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter mb-6 leading-tight border-b-2 border-spyAmber pb-4">{t.briefingTitle}</h2>
                   <p className="text-sm font-bold text-white/80 leading-relaxed uppercase tracking-wider mb-2">
                     <TerminalText text={t.briefingText} delay={20} />
                   </p>
@@ -724,29 +773,29 @@ const App: React.FC = () => {
                      <div className="w-2 h-2 rounded-full bg-spyAmber/20 animate-pulse delay-150"></div>
                   </div>
                 </div>
-                <button onClick={() => setOnboardingStep('NAME')} className="w-full bg-spyAmber text-black font-black py-6 rounded-3xl shadow-[0_8px_0_#b37b00] active:translate-y-2 active:shadow-none transition-all text-xl uppercase tracking-widest flex items-center justify-center gap-3">
-                   {t.startInfiltration} <ChevronRight />
+                <button onClick={() => setOnboardingStep('NAME')} className="w-full self-stretch bg-spyAmber text-black font-black py-6 rounded-3xl shadow-[0_8px_0_#b37b00] active:translate-y-2 active:shadow-none transition-all text-sm sm:text-xl uppercase tracking-normal sm:tracking-widest flex items-center justify-center gap-2 sm:gap-3 px-4 text-center">
+                   {t.startInfiltration} <ChevronRight className="flex-shrink-0" />
                 </button>
-                <button type="button" onClick={() => setOnboardingStep('LANG')} className="mt-8 text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                <button type="button" onClick={() => setOnboardingStep('LANG')} className="mt-8 text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                   <ChevronLeft size={14}/> BACK_TO_CIPHER
                 </button>
               </div>
             ) : onboardingStep === 'NAME' ? (
-              <div className="w-full px-4 animate-in slide-in-from-right-10">
+              <div className="w-full self-stretch px-4 animate-in slide-in-from-right-10">
                 <div className="w-32 h-32 bg-spyCyan/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyCyan shadow-[0_0_40px_rgba(0,242,255,0.3)] animate-pulse">
                   <UserCircle size={64} className="text-spyCyan" />
                 </div>
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.identityReq}</h2>
                 <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('AGE'); } }} className="space-y-6">
-                  <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest" autoFocus />
+                  <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-4 sm:px-8 text-lg sm:text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-wide sm:tracking-widest" autoFocus />
                   <button disabled={!tempName.trim()} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl">{t.confirmIdentity}</button>
-                  <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                  <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                     <ChevronLeft size={14}/> BACK_TO_BRIEFING
                   </button>
                 </form>
               </div>
             ) : (
-              <div className="w-full animate-in slide-in-from-right-10">
+              <div className="w-full self-stretch animate-in slide-in-from-right-10">
                 <div className="w-32 h-32 bg-spyPink/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyPink shadow-[0_0_40px_rgba(255,0,122,0.3)] animate-pulse">
                   <Fingerprint size={64} className="text-spyPink" />
                 </div>
@@ -763,8 +812,8 @@ const App: React.FC = () => {
                       >
                         <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
-                          <span className={`text-[11px] font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
+                          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
+                          <span className={`text-xs font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
                             {rank.name}
                           </span>
                         </div>
@@ -772,12 +821,12 @@ const App: React.FC = () => {
                     );
                   })}
                 </div>
-                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-xs text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                    <ChevronLeft size={14}/> BACK_TO_IDENTITY
                 </button>
               </div>
             )}
-            <div className="mt-12 mb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+            <div className="mt-12 mb-4 text-xs text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
               Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
             </div>
           </div>
@@ -812,7 +861,7 @@ const App: React.FC = () => {
                       value={manualSearchInput}
                       onChange={(e) => setManualSearchInput(e.target.value)}
                       placeholder={t.searchPlaceholder}
-                      className="w-full bg-black/40 border-4 border-white/5 rounded-3xl py-4 pl-12 pr-6 font-black text-spyCyan uppercase tracking-widest placeholder:text-white/10 focus:border-spyCyan/50 focus:outline-none transition-all text-sm"
+                      className="w-full bg-black/40 border-4 border-white/5 rounded-3xl py-4 pl-12 pr-6 font-black text-spyCyan uppercase tracking-wide sm:tracking-widest placeholder:text-white/10 focus:border-spyCyan/50 focus:outline-none transition-all text-sm"
                     />
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-spyCyan transition-colors" size={20} />
                   </div>
@@ -829,7 +878,13 @@ const App: React.FC = () => {
             
             <div className="grid gap-6">
               {missions.length > 0 ? missions.map(m => (
-                <MissionCard key={m.id} mission={m} t={t} onSelect={(m) => { setActiveMissionId(m.id); setView('MISSION_DETAIL'); }} />
+                <MissionCard
+                  key={m.id}
+                  mission={m}
+                  t={t}
+                  onSelect={(m) => { setActiveMissionId(m.id); setView('MISSION_DETAIL'); }}
+                  onDelete={(m) => setMissionToDelete(m)}
+                />
               )) : (
                 <div className="py-20 text-center border-4 border-dashed border-white/5 rounded-[40px] bg-white/2">
                    <Ghost size={50} className="mx-auto text-white/10 mb-4 animate-pulse" />
@@ -868,12 +923,12 @@ const App: React.FC = () => {
                     <h3 className="text-2xl font-black text-white uppercase leading-tight mb-3 pr-10">{target.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mb-4">
                       {target.type && (
-                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyAmber bg-spyAmber/10 border border-spyAmber/20 px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-spyAmber bg-spyAmber/10 border border-spyAmber/20 px-3 py-1.5 rounded-full">
                           <Tag size={11} /> {target.type}
                         </span>
                       )}
                       {distanceKm !== null && (
-                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
+                        <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
                           <Navigation size={11} /> {formatDistance(distanceKm)}
                         </span>
                       )}
@@ -890,7 +945,7 @@ const App: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="relative z-10 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
+                      className="relative z-10 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
                     >
                       <ExternalLink size={12} /> {t.viewOnMaps}
                     </a>
@@ -933,11 +988,11 @@ const App: React.FC = () => {
                          {hasValidKey ? <ShieldCheck size={16} /> : <ShieldX size={16} />}
                       </div>
                    </div>
-                   <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-[10px]"><RefreshCw size={18} /> {t.updateKey}</button>
+                   <button onClick={handleOpenKeySelector} className="w-full bg-spyCyan text-black font-black py-4 rounded-3xl shadow-[0_6px_0_#00a6af] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 uppercase text-xs"><RefreshCw size={18} /> {t.updateKey}</button>
                 </div>
-                <button onClick={handleTerminateIdentity} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-[10px] tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
+                <button onClick={handleTerminateIdentity} className="w-full py-4 border-2 border-spyRed/30 text-spyRed font-black uppercase text-xs tracking-[0.4em] rounded-3xl hover:bg-spyRed/10 transition-all mt-10">{t.terminateIdentity}</button>
              </div>
-                <div className="mt-10 pb-4 text-[10px] text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+                <div className="mt-10 pb-4 text-xs text-white/20 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                   Made with ❤️ by <a href="https://github.com/Sarah86" target="_blank" rel="noopener noreferrer" className="text-spyPink hover:text-white transition-colors underline decoration-spyPink/30">Sarah86</a>
                 </div>
           </div>
@@ -952,13 +1007,22 @@ const App: React.FC = () => {
                   </button>
                 )}
                 {currentMission?.status === 'COMPLETED' && <div className="bg-spyGreen text-black font-black text-xs px-5 py-3 rounded-full flex items-center gap-2 shadow-lg shadow-spyGreen/30 animate-bounce"><Trophy size={18}/> {t.missionClear}</div>}
+                {currentMission && (
+                  <button
+                    onClick={() => setMissionToDelete(currentMission)}
+                    aria-label={t.deleteMission}
+                    className="flex items-center gap-2 text-white/40 font-black text-xs uppercase bg-white/5 p-3 rounded-full border-2 border-white/10 hover:bg-spyRed hover:border-spyRed hover:text-black transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
             {currentMission && (
               <div className="space-y-8 pb-10">
                 <div className="p-8 rounded-[40px] border-4 border-spyGreen/30 bg-spyGreen/5 relative overflow-hidden shadow-2xl shadow-spyGreen/10">
                   <div className="flex items-center gap-3 mb-6">
-                     <span className="bg-spyGreen text-black text-[10px] font-black px-3 py-1.5 rounded-lg">{t.topSecret}</span>
+                     <span className="bg-spyGreen text-black text-xs font-black px-3 py-1.5 rounded-lg">{t.topSecret}</span>
                      <span className="text-spyGreen text-xs font-black tracking-widest">{currentMission.codeName}</span>
                   </div>
                   <h2 className="text-4xl font-black text-white uppercase mb-4 leading-[0.9] tracking-tighter">{currentMission.title}</h2>
@@ -966,16 +1030,35 @@ const App: React.FC = () => {
                   <div className="h-6 w-full bg-white/10 rounded-full overflow-hidden border-2 border-white/5 p-1">
                     <div className="h-full bg-spyGreen rounded-full transition-all duration-700 shadow-[0_0_25px_#00ff41]" style={{ width: `${progressPercent}%` }}></div>
                   </div>
-                  <div className="mt-4 flex justify-between text-[10px] font-black text-spyGreen uppercase tracking-widest">
+                  <div className="mt-4 flex justify-between text-xs font-black text-spyGreen uppercase tracking-widest">
                      <span className="flex items-center gap-2"><Sparkles size={14}/> {t.intelCaptured}</span>
                      <span>{currentMission.tasks.filter(tk => tk.completed).length} / {currentMission.tasks.length} {t.secured}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                   {currentMission.tasks.map(tk => (
-                     <TaskItem key={tk.id} task={tk} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
-                   ))}
-                </div>
+                {activeTask ? (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-center gap-2">
+                      {currentMission.tasks.map((tk, i) => (
+                        <div
+                          key={tk.id}
+                          className={`h-2.5 rounded-full transition-all ${
+                            tk.completed ? 'bg-spyGreen w-8' : i === activeTaskIndex ? 'bg-spyCyan w-10' : 'bg-white/10 w-2.5'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-center text-sm font-black uppercase tracking-widest text-white/40">
+                      {t.stepOf} {activeTaskIndex + 1} / {currentMission.tasks.length}
+                    </p>
+                    <TaskItem task={activeTask} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                     {currentMission.tasks.map(tk => (
+                       <TaskItem key={tk.id} task={tk} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
+                     ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -984,12 +1067,12 @@ const App: React.FC = () => {
 
       {view !== 'ONBOARDING' && (
         <>
-          <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 p-5 flex justify-around items-center z-50 rounded-t-[40px]">
-            <button onClick={() => setView('HOME')} className={`p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={32} /></button>
-            <button onClick={() => setView('MISSION_DETAIL')} className={`p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={32} /></button>
-            <button onClick={() => setView('SETTINGS')} className={`p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={32} /></button>
-            <button onClick={() => window.location.reload()} className="p-4 text-white/40 hover:text-spyRed transition-all"><Power size={32} /></button>
-            <button onClick={() => setShowPrivacy(!showPrivacy)} className="p-4 text-white/40 hover:text-spyCyan transition-all"><Shield size={32} /></button>
+          <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-spyDark/90 backdrop-blur-2xl border-t-2 border-white/10 px-2 py-4 sm:px-5 sm:py-5 flex justify-around items-center z-50 rounded-t-[40px]">
+            <button onClick={() => setView('HOME')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={26} /></button>
+            <button onClick={() => setView('MISSION_DETAIL')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={26} /></button>
+            <button onClick={() => setView('SETTINGS')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={26} /></button>
+            <button onClick={() => window.location.reload()} className="p-2.5 sm:p-4 text-white/40 hover:text-spyRed transition-all"><Power size={26} /></button>
+            <button onClick={() => setShowPrivacy(!showPrivacy)} className="p-2.5 sm:p-4 text-white/40 hover:text-spyCyan transition-all"><Shield size={26} /></button>
             {showPrivacy && (
               <div className="absolute bottom-full left-0 right-0 p-8 bg-spyDark/95 backdrop-blur-3xl border-t-4 border-spyCyan animate-in slide-in-from-bottom-10">
                 <div className="flex items-center gap-4 mb-4">

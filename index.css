@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+html {
+  font-size: 112.5%;
+}
+
+/* The UI's UNDERSCORE_STYLE labels have no spaces to wrap at, so a long
+   translation can overflow its container on narrow screens — let the
+   browser break mid-word instead of spilling out of the layout. */
+body {
+  overflow-wrap: break-word;
+}
+
 @theme {
   --color-spyGreen: #00ff41;
   --color-spyAmber: #ffb000;
