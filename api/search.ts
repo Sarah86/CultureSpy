@@ -15,7 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const langLabel = lang === 'PT' ? 'Português do Brasil' : lang;
   const prompt = (process.env.AI_PROMPT_SEARCH || '')
     .replace(/\${query}/g, query)
-    .replace(/\${langLabel}/g, langLabel);
+    .replace(/\${langLabel}/g, langLabel)
+    + '\n\nFor each result, also include numeric "lat" and "lng" fields with that location\'s precise coordinates.';
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });

@@ -13,7 +13,26 @@ interface NearbyTarget {
   name: string;
   type: string;
   description: string;
+  lat?: number;
+  lng?: number;
 }
+
+const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const sortByDistance = (targets: NearbyTarget[], origin: { lat: number; lng: number } | null): NearbyTarget[] => {
+  if (!origin) return targets;
+  return [...targets].sort((a, b) => {
+    const da = typeof a.lat === 'number' && typeof a.lng === 'number' ? getDistanceKm(origin.lat, origin.lng, a.lat, a.lng) : Infinity;
+    const db = typeof b.lat === 'number' && typeof b.lng === 'number' ? getDistanceKm(origin.lat, origin.lng, b.lat, b.lng) : Infinity;
+    return da - db;
+  });
+};
 
 const TRANSLATIONS: Record<Language, Translations> = {
   EN: {
@@ -398,7 +417,8 @@ const App: React.FC = () => {
       }
 
       const { targets } = await res.json();
-      setDetectedTargets(targets);
+      const origin = latLng ? { lat: latLng.latitude, lng: latLng.longitude } : null;
+      setDetectedTargets(sortByDistance(targets, origin));
       setView('SELECT_LOCATION');
       setIsScanning(false);
       setManualSearchInput('');
@@ -444,7 +464,7 @@ const App: React.FC = () => {
       }
 
       const { targets } = await res.json();
-      setDetectedTargets(targets);
+      setDetectedTargets(sortByDistance(targets, { lat: latitude, lng: longitude }));
       setView('SELECT_LOCATION');
       setIsScanning(false);
     } catch (err: any) {
