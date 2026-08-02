@@ -1,6 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
 
+// Google Maps grounding sometimes leaves inline citation markers like "[1]"
+// or "[2, 3]" in the generated text — strip them before they reach the UI.
+const stripCitations = (text: string): string => text.replace(/\s?\[\d+(?:,\s*\d+)*\]/g, '').trim();
+
+const sanitizeTarget = (target: any) => ({
+  ...target,
+  name: typeof target.name === 'string' ? stripCitations(target.name) : target.name,
+  description: typeof target.description === 'string' ? stripCitations(target.description) : target.description,
+  address: typeof target.address === 'string' ? stripCitations(target.address) : target.address
+});
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -45,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'No results found' });
     }
 
-    res.json({ targets });
+    res.json({ targets: targets.map(sanitizeTarget) });
   } catch (err: any) {
     console.error('DEBUG: Search Error:', err);
     
