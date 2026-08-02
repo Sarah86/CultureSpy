@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag, Trash2 } from 'lucide-react';
+import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag, Trash2 } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
 import { Mission, Task, TaskType, SensoryType, Language, Translations, NearbyTarget } from './types';
 import { storage } from './storage';
@@ -1155,7 +1155,6 @@ const App: React.FC = () => {
             <button onClick={() => setView('HOME')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'HOME' || view === 'SELECT_LOCATION' ? 'bg-spyCyan text-black scale-110 shadow-lg shadow-spyCyan/40' : 'text-white/40 hover:text-spyCyan hover:bg-spyCyan/10'}`}><Radar size={26} /></button>
             <button onClick={() => setView('MISSION_DETAIL')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'MISSION_DETAIL' ? 'bg-spyPink text-black scale-110 shadow-lg shadow-spyPink/40' : 'text-white/40 hover:text-spyPink hover:bg-spyPink/10'}`}><Terminal size={26} /></button>
             <button onClick={() => setView('SETTINGS')} className={`p-2.5 sm:p-4 rounded-3xl transition-all ${view === 'SETTINGS' ? 'bg-spyAmber text-black scale-110 shadow-lg shadow-spyAmber/40' : 'text-white/40 hover:text-spyAmber hover:bg-spyAmber/10'}`}><UserCircle size={26} /></button>
-            <button onClick={() => window.location.reload()} className="p-2.5 sm:p-4 text-white/40 hover:text-spyRed transition-all"><Power size={26} /></button>
             <button onClick={() => setShowPrivacy(!showPrivacy)} className="p-2.5 sm:p-4 text-white/40 hover:text-spyCyan transition-all"><Shield size={26} /></button>
             {showPrivacy && (
               <div className="absolute bottom-full left-0 right-0 p-8 bg-spyDark/95 backdrop-blur-3xl border-t-4 border-spyCyan animate-in slide-in-from-bottom-10">
