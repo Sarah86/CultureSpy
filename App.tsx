@@ -96,7 +96,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteTitle: 'Delete this mission?',
     confirmDeleteBody: 'All progress on this mission will be lost. This cannot be undone.',
     cancel: 'Cancel',
-    stepOf: 'Step'
+    stepOf: 'Step',
+    viewLastResults: 'View Last Scan Results'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -158,7 +159,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteTitle: 'Eliminare questa missione?',
     confirmDeleteBody: 'Tutti i progressi su questa missione andranno persi. Non si può annullare.',
     cancel: 'Annulla',
-    stepOf: 'Passo'
+    stepOf: 'Passo',
+    viewLastResults: 'Vedi Ultima Scansione'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -220,7 +222,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteTitle: 'Supprimer cette mission ?',
     confirmDeleteBody: 'Toute la progression sur cette mission sera perdue. Action irréversible.',
     cancel: 'Annuler',
-    stepOf: 'Étape'
+    stepOf: 'Étape',
+    viewLastResults: 'Voir Le Dernier Scan'
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -282,7 +285,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteTitle: 'Excluir esta missão?',
     confirmDeleteBody: 'Todo o progresso nesta missão será perdido. Essa ação não pode ser desfeita.',
     cancel: 'Cancelar',
-    stepOf: 'Passo'
+    stepOf: 'Passo',
+    viewLastResults: 'Ver Último Escaneamento'
   }
 };
 
@@ -903,7 +907,20 @@ const App: React.FC = () => {
                 </form>
               </div>
             </div>
-            
+
+            {detectedTargets.length > 0 && (
+              <button
+                onClick={() => setView('SELECT_LOCATION')}
+                className="w-full flex items-center justify-between gap-3 bg-spyAmber/10 border-4 border-spyAmber/30 rounded-[32px] p-6 hover:border-spyAmber hover:bg-spyAmber/20 transition-all"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <Flame className="text-spyAmber flex-shrink-0" size={22} />
+                  <span className="text-sm font-black uppercase text-white">{t.viewLastResults} ({detectedTargets.length})</span>
+                </div>
+                <ChevronRight className="text-spyAmber flex-shrink-0" size={22} />
+              </button>
+            )}
+
             <div className="grid gap-6">
               {missions.length > 0 ? missions.map(m => (
                 <MissionCard
