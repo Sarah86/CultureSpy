@@ -30,27 +30,25 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, t, onToggle }) => {
           : 'bg-spySlate border-white/5 hover:border-spyCyan shadow-xl hover:shadow-spyCyan/10'}
       `}
     >
-      <div className="flex items-start gap-4">
-        <div className={`flex-shrink-0 w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all
+      <div className="flex items-center justify-between mb-1">
+        <div className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all
           ${task.completed ? 'bg-spyGreen border-spyGreen text-black rotate-12' : 'border-white/10 text-white/40'}
         `}>
-          {task.completed ? <Check size={28} strokeWidth={4} /> : <span>{getSensoryIcon(task.sensoryType)}</span>}
-        </div>
-
-        <div className="flex-1 min-w-0 pt-2">
-          <p className={`text-lg font-black leading-snug uppercase tracking-tight transition-all
-            ${task.completed ? 'text-spyGreen line-through opacity-50' : 'text-white'}
-          `}>
-            {task.prompt}
-          </p>
+          {task.completed ? <Check size={22} strokeWidth={4} /> : <span>{getSensoryIcon(task.sensoryType)}</span>}
         </div>
 
         {!task.completed && (
-          <div className="flex-shrink-0 animate-bounce pt-2">
+          <div className="animate-bounce">
             <Zap size={18} className="text-spyAmber" />
           </div>
         )}
       </div>
+
+      <p className={`text-lg font-black leading-snug uppercase tracking-tight transition-all
+        ${task.completed ? 'text-spyGreen line-through opacity-50' : 'text-white'}
+      `}>
+        {task.prompt}
+      </p>
 
       {task.curiosity && (
         <div className={`mt-2 p-4 rounded-xl border-2 transition-all duration-500
