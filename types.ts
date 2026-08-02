@@ -93,10 +93,32 @@ export interface Mission {
   tasks: Task[];
   isLocked: boolean;
   status: 'PENDING' | 'ACTIVE' | 'COMPLETED';
+  // Snapshot of the place this mission was generated for, so the mission
+  // detail screen can still show address/distance/maps without re-fetching.
+  targetName?: string;
+  targetAddress?: string;
+  targetLat?: number;
+  targetLng?: number;
+  targetDistanceKm?: number;
 }
 
 export interface AgentProfile {
   name: string;
   age: number;
   lang: Language;
+}
+
+export interface NearbyTarget {
+  name: string;
+  type: string;
+  description: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface PersistedSearch {
+  targets: NearbyTarget[];
+  origin: { lat: number; lng: number } | null;
+  lastTarget: NearbyTarget | null;
 }

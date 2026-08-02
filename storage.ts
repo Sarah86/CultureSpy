@@ -1,5 +1,5 @@
 
-import { AgentProfile, Mission } from './types';
+import { AgentProfile, Mission, PersistedSearch } from './types';
 
 // Every entity persisted here goes through this module — nothing else in the
 // app touches localStorage directly. Swapping this for a real API/database
@@ -10,7 +10,8 @@ const STORAGE_VERSION = 1;
 const KEYS = {
   profile: 'culturespy:profile',
   missions: 'culturespy:missions',
-  missionCachePrefix: 'culturespy:mission_cache:'
+  missionCachePrefix: 'culturespy:mission_cache:',
+  searchResults: 'culturespy:search_results'
 };
 
 interface Envelope<T> {
@@ -77,9 +78,22 @@ export const storage = {
     remove(KEYS.missionCachePrefix + cacheKey);
   },
 
+  getSearchResults(): PersistedSearch | null {
+    return readJSON<PersistedSearch>(KEYS.searchResults);
+  },
+
+  saveSearchResults(results: PersistedSearch): void {
+    writeJSON(KEYS.searchResults, results);
+  },
+
+  clearSearchResults(): void {
+    remove(KEYS.searchResults);
+  },
+
   clearAll(): void {
     remove(KEYS.profile);
     remove(KEYS.missions);
+    remove(KEYS.searchResults);
     try {
       Object.keys(localStorage)
         .filter(key => key.startsWith(KEYS.missionCachePrefix))

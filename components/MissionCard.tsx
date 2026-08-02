@@ -16,15 +16,15 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
 
   const CategoryIcon = () => {
     switch (mission.category) {
-      case 'ART': return <Eye size={20} className="text-spyCyan" />;
-      case 'SCIENCE': return <Binary size={20} className="text-spyAmber" />;
-      case 'MUSIC': return <Music size={20} className="text-spyPink" />;
-      default: return <Shield size={20} />;
+      case 'ART': return <Eye size={13} className="text-spyCyan" />;
+      case 'SCIENCE': return <Binary size={13} className="text-spyAmber" />;
+      case 'MUSIC': return <Music size={13} className="text-spyPink" />;
+      default: return <Shield size={13} />;
     }
   };
 
   return (
-    <div 
+    <div
       onClick={() => !mission.isLocked && onSelect(mission)}
       className={`
         relative rounded-[32px] border-4 p-6 cursor-pointer transition-all duration-300 group overflow-hidden
@@ -33,27 +33,24 @@ const MissionCard: React.FC<MissionCardProps> = ({ mission, t, onSelect, onDelet
         ${isCompleted ? 'border-spyGreen/40 bg-spyGreen/5' : ''}
       `}
     >
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex flex-col flex-1 min-w-0 pr-4">
-          <span className="text-[10px] tracking-[0.3em] opacity-50 mb-2 font-black uppercase flex items-center gap-2">
-            <Target size={12} /> ID: {mission.codeName}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete(mission); }}
+        aria-label="Delete mission"
+        className="absolute top-4 right-4 z-10 w-9 h-9 rounded-xl border-2 border-white/10 bg-black/40 text-white/30 flex items-center justify-center hover:border-spyRed hover:text-spyRed hover:bg-spyRed/10 transition-all"
+      >
+        <Trash2 size={16} />
+      </button>
+
+      <div className="mb-6 pr-12">
+        <span className="text-[10px] tracking-[0.3em] opacity-50 mb-2 font-black uppercase flex items-center gap-2">
+          <span className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0
+            ${mission.isLocked ? 'border-zinc-800 bg-black' : 'border-white/10 bg-black/40'}`}>
+            {mission.isLocked ? <Lock size={11} className="text-zinc-600" /> : <CategoryIcon />}
           </span>
-          <h3 className="text-2xl font-black leading-[0.9] uppercase tracking-tighter text-white group-hover:text-spyCyan transition-colors">{mission.title}</h3>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all group-hover:rotate-12
-            ${mission.isLocked ? 'border-zinc-800 bg-black' : 'border-white/10 bg-black/40 shadow-inner'}`}>
-            {mission.isLocked ? <Lock size={20} className="text-zinc-600" /> : <CategoryIcon />}
-          </div>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDelete(mission); }}
-            aria-label="Delete mission"
-            className="w-9 h-9 rounded-xl border-2 border-white/10 bg-black/40 text-white/30 flex items-center justify-center hover:border-spyRed hover:text-spyRed hover:bg-spyRed/10 transition-all"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+          <Target size={12} /> ID: {mission.codeName}
+        </span>
+        <h3 className="text-2xl font-black leading-[0.9] uppercase tracking-tighter text-white group-hover:text-spyCyan transition-colors">{mission.title}</h3>
       </div>
 
       <div className="flex items-center gap-1.5 mb-6">
