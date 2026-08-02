@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag, Trash2 } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
-import { Mission, Task, TaskType, SensoryType, Language, Translations, NearbyTarget } from './types';
+import { Mission, Task, TaskType, SensoryType, Language, Translations, NearbyTarget, AgentGender } from './types';
 import { storage } from './storage';
 import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
@@ -45,11 +45,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     enterCodename: 'ENTER_CODENAME',
     confirmIdentity: 'CONFIRM IDENTITY',
     welcome: 'WELCOME',
-    selectRank: 'SELECT TRAINING RANK',
+    selectAge: 'STATE YOUR AGE, AGENT',
     yearsSuffix: 'YEARS',
-    rankRookie: 'RECRUIT',
-    rankSpecialist: 'AGENT',
-    rankElite: 'COMMANDER',
+    agentTitle: 'SECRET AGENT',
     stealthOn: 'Stealth_On',
     xp: 'XP',
     radarTitle: 'The Fun Radar',
@@ -65,7 +63,6 @@ const TRANSLATIONS: Record<Language, Translations> = {
     intelCaptured: 'Intel Captured',
     secured: 'SECURED',
     settingsTitle: 'Settings',
-    rank: 'Agent Rank',
     satelliteLink: 'Satellite Link',
     satelliteDesc: 'Verify your connection to the CultureSpy satellite network.',
     updateKey: 'Update Key Selection',
@@ -84,6 +81,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_searching: 'SNIFFING_FOR_ADVENTURE',
     status_connecting: 'CATCHING_SECRET_WAVES',
     status_encrypting: 'ENCRYPTING_MISSION_DATA',
+    status_translating: 'TRANSLATING_INTEL_FILES',
     error_radar: 'RADAR_JAMMED: NO_DATA_STREAM',
     error_gps: 'GPS_LINK_FAILURE',
     apiError: 'FREE_UPLINK_LIMIT: SATELLITE_CONGESTION. RE-ESTABLISHING_IN_30S.',
@@ -97,7 +95,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteBody: 'All progress on this mission will be lost. This cannot be undone.',
     cancel: 'Cancel',
     stepOf: 'Step',
-    viewLastResults: 'View Last Scan Results'
+    viewLastResults: 'View Last Scan Results',
+    selectGender: 'ARE YOU A BOY OR A GIRL, AGENT?',
+    genderBoy: 'BOY',
+    genderGirl: 'GIRL'
   },
   IT: {
     selectCipher: 'SELEZIONA CIFRARIO COMUNICAZIONE',
@@ -108,11 +109,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     enterCodename: 'INSERISCI_CODENAME',
     confirmIdentity: 'CONFERMA IDENTITÀ',
     welcome: 'BENVENUTO',
-    selectRank: 'SELEZIONA GRADO ADDESTRAMENTO',
+    selectAge: 'QUANTI ANNI HAI, AGENTE?',
     yearsSuffix: 'ANNI',
-    rankRookie: 'RECLUTA',
-    rankSpecialist: 'AGENTE',
-    rankElite: 'COMANDANTE',
+    agentTitle: 'AGENTE SEGRETO',
     stealthOn: 'Modalità_Invisibile',
     xp: 'XP',
     radarTitle: 'Radar Divertimento',
@@ -128,7 +127,6 @@ const TRANSLATIONS: Record<Language, Translations> = {
     intelCaptured: 'Dati Acquisiti',
     secured: 'MESSO AL SICURO',
     settingsTitle: 'Impostazioni',
-    rank: 'Grado Agente',
     satelliteLink: 'Collegamento Satellitare',
     satelliteDesc: 'Verifica la tua connessione alla rete CultureSpy.',
     updateKey: 'Aggiorna Chiave Segreta',
@@ -147,6 +145,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_searching: 'RICERCA_AVVENTURE',
     status_connecting: 'SINTONIZZAZIONE_ONDE',
     status_encrypting: 'CRITTOGRAFIA_MISSIONE',
+    status_translating: 'TRADUZIONE_FASCICOLI',
     error_radar: 'RADAR DISTURBATO: NO DATI',
     error_gps: 'ERRORE_LINK_GPS',
     apiError: 'LIMITE_UPLINK_GRATUITO: CONGESTIONE_SATELLITE. RIPROVA_TRA_30S.',
@@ -160,7 +159,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteBody: 'Tutti i progressi su questa missione andranno persi. Non si può annullare.',
     cancel: 'Annulla',
     stepOf: 'Passo',
-    viewLastResults: 'Vedi Ultima Scansione'
+    viewLastResults: 'Vedi Ultima Scansione',
+    selectGender: 'SEI UN MASCHIO O UNA FEMMINA, AGENTE?',
+    genderBoy: 'MASCHIO',
+    genderGirl: 'FEMMINA'
   },
   FR: {
     selectCipher: 'SÉLECTIONNER LE CHIFFREMENT',
@@ -171,11 +173,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     enterCodename: 'NOM_DE_CODE',
     confirmIdentity: 'CONFIRMER IDENTITÉ',
     welcome: 'BIENVENUE',
-    selectRank: 'SÉLECTIONNER RANG D\'ENTRAÎNEMENT',
+    selectAge: 'QUEL ÂGE AS-TU, AGENT ?',
     yearsSuffix: 'ANS',
-    rankRookie: 'RECRUE',
-    rankSpecialist: 'AGENT',
-    rankElite: 'COMMANDANT',
+    agentTitle: 'AGENT SECRET',
     stealthOn: 'Mode_Furtif',
     xp: 'XP',
     radarTitle: 'Radar de Plaisir',
@@ -191,7 +191,6 @@ const TRANSLATIONS: Record<Language, Translations> = {
     intelCaptured: 'Infos Capturées',
     secured: 'SÉCURISÉ',
     settingsTitle: 'Paramètres',
-    rank: 'Rang de l\'Agent',
     satelliteLink: 'Liaison Satellite',
     satelliteDesc: 'Vérifiez votre connexion au réseau CultureSpy.',
     updateKey: 'Mettre à Jour la Clé',
@@ -210,6 +209,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_searching: 'RECHERCHE_AVENTURE',
     status_connecting: 'SYNCHRO_SATELLITE',
     status_encrypting: 'CHIFFREMENT_MISSION',
+    status_translating: 'TRADUCTION_DES_DOSSIERS',
     error_radar: 'RADAR BROUILLÉ : PAS DE FLUX',
     error_gps: 'ERREUR_GPS',
     apiError: 'LIMITE_LIAISON_GRATUITE : CONGESTION_SATELLITE. RÉESSAYER_DANS_30S.',
@@ -223,7 +223,10 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteBody: 'Toute la progression sur cette mission sera perdue. Action irréversible.',
     cancel: 'Annuler',
     stepOf: 'Étape',
-    viewLastResults: 'Voir Le Dernier Scan'
+    viewLastResults: 'Voir Le Dernier Scan',
+    selectGender: 'ES-TU UN GARÇON OU UNE FILLE, AGENT ?',
+    genderBoy: 'GARÇON',
+    genderGirl: 'FILLE'
   },
   PT: {
     selectCipher: 'SELECIONAR CÓDIGO DE COMUNICAÇÃO',
@@ -234,11 +237,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     enterCodename: 'DIGITAR_CODENOME',
     confirmIdentity: 'CONFIRMAR IDENTIDADE',
     welcome: 'BEM-VINDO',
-    selectRank: 'SELECIONAR PATENTE DE TREINO',
+    selectAge: 'QUAL A SUA IDADE, AGENTE?',
     yearsSuffix: 'ANOS',
-    rankRookie: 'RECRUTA',
-    rankSpecialist: 'AGENTE',
-    rankElite: 'COMANDANTE',
+    agentTitle: 'AGENTE SECRETO',
     stealthOn: 'Modo_Furtivo',
     xp: 'XP',
     radarTitle: 'Radar de Diversão',
@@ -254,7 +255,6 @@ const TRANSLATIONS: Record<Language, Translations> = {
     intelCaptured: 'Dados Capturados',
     secured: 'EM SEGURANÇA',
     settingsTitle: 'Configurações',
-    rank: 'Patente do Agente',
     satelliteLink: 'Link de Satélite',
     satelliteDesc: 'Verifique sua conexão com a rede CultureSpy.',
     updateKey: 'Atualizar Chave Secreta',
@@ -273,6 +273,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     status_searching: 'BUSCANDO_AVENTURA',
     status_connecting: 'CAPTURANDO_ONDAS',
     status_encrypting: 'CRIPTOGRAFANDO_MISSÃO',
+    status_translating: 'TRADUZINDO_ARQUIVOS',
     error_radar: 'RADAR BLOQUEADO: SEM DADOS',
     error_gps: 'FALHA_LINK_GPS',
     apiError: 'LIMITE_DE_LINK_GRATUITO: CONGESTIONAMENTO_SATÉLITE. RECONECTANDO_EM_30S.',
@@ -286,8 +287,20 @@ const TRANSLATIONS: Record<Language, Translations> = {
     confirmDeleteBody: 'Todo o progresso nesta missão será perdido. Essa ação não pode ser desfeita.',
     cancel: 'Cancelar',
     stepOf: 'Passo',
-    viewLastResults: 'Ver Último Escaneamento'
+    viewLastResults: 'Ver Último Escaneamento',
+    selectGender: 'VOCÊ É MENINO OU MENINA, AGENTE?',
+    genderBoy: 'MENINO',
+    genderGirl: 'MENINA'
   }
+};
+
+// EN doesn't inflect for gender; the other three languages do for a
+// handful of greeting strings, so a girl agent sees "BEM-VINDA" instead
+// of the masculine default "BEM-VINDO", etc.
+const FEMININE_OVERRIDES: Partial<Record<Language, Partial<Translations>>> = {
+  IT: { welcome: 'BENVENUTA', radarDesc: 'Pronta a trovare glitch culturali bizzarri,' },
+  FR: { radarDesc: 'Prête à débusquer des anomalies culturelles,' },
+  PT: { welcome: 'BEM-VINDA', radarDesc: 'Pronta para encontrar falhas culturais por perto,' }
 };
 
 const App: React.FC = () => {
@@ -305,8 +318,9 @@ const App: React.FC = () => {
   });
   const [agentName, setAgentName] = useState(() => storage.getProfile()?.name ?? '');
   const [tempName, setTempName] = useState('');
-  const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'INTRO' | 'NAME' | 'AGE'>('LANG');
+  const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'INTRO' | 'NAME' | 'GENDER' | 'AGE'>('LANG');
   const [agentAge, setAgentAge] = useState<number | null>(() => storage.getProfile()?.age ?? null);
+  const [agentGender, setAgentGender] = useState<AgentGender | null>(() => storage.getProfile()?.gender ?? null);
   const [manualSearchInput, setManualSearchInput] = useState('');
 
   const [isScanning, setIsScanning] = useState(false);
@@ -322,7 +336,7 @@ const App: React.FC = () => {
   const [missionToDelete, setMissionToDelete] = useState<Mission | null>(null);
   const [focusedTaskIndex, setFocusedTaskIndex] = useState<number | null>(null);
 
-  const t = TRANSLATIONS[lang];
+  const t = agentGender === 'GIRL' ? { ...TRANSLATIONS[lang], ...FEMININE_OVERRIDES[lang] } : TRANSLATIONS[lang];
 
   useEffect(() => {
     checkKeyStatus();
@@ -346,10 +360,10 @@ const App: React.FC = () => {
 
   // Persist the agent's profile once onboarding is complete, and keep it in sync with language changes.
   useEffect(() => {
-    if (agentName && agentAge) {
-      storage.saveProfile({ name: agentName, age: agentAge, lang });
+    if (agentName && agentAge && agentGender) {
+      storage.saveProfile({ name: agentName, age: agentAge, lang, gender: agentGender });
     }
-  }, [agentName, agentAge, lang]);
+  }, [agentName, agentAge, agentGender, lang]);
 
   const checkKeyStatus = async () => {
     if (window.aistudio) {
@@ -384,6 +398,7 @@ const App: React.FC = () => {
     storage.clearAll();
     setAgentName('');
     setAgentAge(null);
+    setAgentGender(null);
     setMissions([]);
     setActiveMissionId(null);
     setDetectedTargets([]);
@@ -401,6 +416,54 @@ const App: React.FC = () => {
       setView('HOME');
     }
     setMissionToDelete(null);
+  };
+
+  const handleChangeLanguage = async (newLang: Language) => {
+    if (newLang === lang) return;
+
+    if (missions.length === 0) {
+      setLang(newLang);
+      return;
+    }
+
+    setIsScanning(true);
+    setScanError(undefined);
+    setScanStatus(t.status_translating);
+
+    try {
+      const translated = await Promise.all(missions.map(async (m) => {
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mission: {
+              title: m.title,
+              description: m.description,
+              tasks: m.tasks.map(tk => ({ prompt: tk.prompt, curiosity: tk.curiosity }))
+            },
+            targetLang: newLang
+          })
+        });
+        if (!res.ok) throw new Error('Translation failed');
+        const data = await res.json();
+        return {
+          ...m,
+          title: data.title ?? m.title,
+          description: data.description ?? m.description,
+          tasks: m.tasks.map((tk, i) => ({
+            ...tk,
+            prompt: data.tasks?.[i]?.prompt ?? tk.prompt,
+            curiosity: data.tasks?.[i]?.curiosity ?? tk.curiosity
+          }))
+        };
+      }));
+      setMissions(translated);
+    } catch (err) {
+      console.warn('Mission translation failed, switching language without translating saved missions.', err);
+    } finally {
+      setLang(newLang);
+      setIsScanning(false);
+    }
   };
 
   const toggleTask = (missionId: string, taskId: string) => {
@@ -621,7 +684,7 @@ const App: React.FC = () => {
       const apiRes = await fetch('/api/mission', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetName: target.name, agentName, agentAge, lang })
+        body: JSON.stringify({ targetName: target.name, agentName, agentAge, agentGender, lang })
       });
 
       if (!apiRes.ok) {
@@ -677,12 +740,6 @@ const App: React.FC = () => {
   const goToStep = (i: number) => {
     if (!currentMission) return;
     setFocusedTaskIndex(Math.max(0, Math.min(currentMission.tasks.length - 1, i)));
-  };
-
-  const getRankInfo = (age: number) => {
-    if (age <= 8) return { name: t.rankRookie, color: 'spyGreen' };
-    if (age <= 10) return { name: t.rankSpecialist, color: 'spyCyan' };
-    return { name: t.rankElite, color: 'spyPink' };
   };
 
   return (
@@ -818,7 +875,7 @@ const App: React.FC = () => {
                   <UserCircle size={64} className="text-spyCyan" />
                 </div>
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.identityReq}</h2>
-                <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('AGE'); } }} className="space-y-6">
+                <form onSubmit={(e) => { e.preventDefault(); if(tempName.trim()) { setAgentName(tempName.trim().toUpperCase()); setOnboardingStep('GENDER'); } }} className="space-y-6">
                   <input type="text" maxLength={12} value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={t.enterCodename} className="w-full bg-spySlate border-4 border-white/10 rounded-3xl py-6 px-8 text-2xl font-black text-spyCyan placeholder:text-white/10 focus:border-spyCyan focus:outline-none transition-all text-center uppercase tracking-widest" autoFocus />
                   <button disabled={!tempName.trim()} className="w-full bg-spyCyan text-black font-black py-5 rounded-3xl shadow-[0_8px_0_#00a6af] active:translate-y-2 active:shadow-none transition-all text-xl">{t.confirmIdentity}</button>
                   <button type="button" onClick={() => setOnboardingStep('INTRO')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
@@ -826,34 +883,52 @@ const App: React.FC = () => {
                   </button>
                 </form>
               </div>
+            ) : onboardingStep === 'GENDER' ? (
+              <div className="w-full self-stretch px-4 animate-in slide-in-from-right-10">
+                <div className="w-32 h-32 bg-spyGreen/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyGreen shadow-[0_0_40px_rgba(0,255,65,0.3)] animate-pulse">
+                  <User size={64} className="text-spyGreen" />
+                </div>
+                <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-10 text-center leading-tight px-4">{t.selectGender}</h2>
+                <div className="grid grid-cols-2 gap-5 w-full pb-10">
+                  <button
+                    onClick={() => { setAgentGender('BOY'); setOnboardingStep('AGE'); }}
+                    className="p-8 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center gap-3 bg-spySlate/50 border-white/10 hover:border-spyGreen hover:bg-spyGreen hover:text-black"
+                  >
+                    <User size={40} />
+                    <span className="text-sm font-black uppercase tracking-widest">{t.genderBoy}</span>
+                  </button>
+                  <button
+                    onClick={() => { setAgentGender('GIRL'); setOnboardingStep('AGE'); }}
+                    className="p-8 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center gap-3 bg-spySlate/50 border-white/10 hover:border-spyGreen hover:bg-spyGreen hover:text-black"
+                  >
+                    <User size={40} />
+                    <span className="text-sm font-black uppercase tracking-widest">{t.genderGirl}</span>
+                  </button>
+                </div>
+                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                  <ChevronLeft size={14}/> BACK_TO_IDENTITY
+                </button>
+              </div>
             ) : (
               <div className="w-full self-stretch animate-in slide-in-from-right-10">
                 <div className="w-32 h-32 bg-spyPink/20 mx-auto flex items-center justify-center rounded-[40px] mb-10 border-4 border-spyPink shadow-[0_0_40px_rgba(255,0,122,0.3)] animate-pulse">
                   <Fingerprint size={64} className="text-spyPink" />
                 </div>
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-4 text-center leading-none">{t.welcome},<br/><span className="text-spyPink">{agentName}!</span></h2>
-                <p className="text-xs text-white/50 mb-12 text-center font-black px-12 uppercase tracking-widest leading-relaxed">{t.selectRank}</p>
+                <p className="text-xs text-white/50 mb-12 text-center font-black px-12 uppercase tracking-widest leading-relaxed">{t.selectAge}</p>
                 <div className="grid grid-cols-2 gap-5 w-full px-2 pb-10">
-                  {[6, 7, 8, 9, 10, 11, 12].map((age) => {
-                    const rank = getRankInfo(age);
-                    return (
-                      <button 
-                        key={age} 
-                        onClick={() => { setAgentAge(age); setView('HOME'); }} 
-                        className="p-6 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center group relative overflow-hidden bg-spySlate/50 border-white/10 hover:border-spyCyan hover:bg-spyCyan hover:text-black"
-                      >
-                        <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
-                        <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
-                          <span className={`text-[11px] font-black uppercase tracking-widest mt-2 bg-black/20 group-hover:bg-black/10 px-3 py-1 rounded-full`}>
-                            {rank.name}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {[6, 7, 8, 9, 10, 11, 12].map((age) => (
+                    <button
+                      key={age}
+                      onClick={() => { setAgentAge(age); setView('HOME'); }}
+                      className="p-6 rounded-[40px] border-4 text-center transition-all active:scale-95 flex flex-col items-center group relative overflow-hidden bg-spySlate/50 border-white/10 hover:border-spyCyan hover:bg-spyCyan hover:text-black"
+                    >
+                      <span className="text-5xl font-black group-hover:scale-110 transition-transform mb-1 leading-none">{age}</span>
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100">{t.yearsSuffix}</span>
+                    </button>
+                  ))}
                 </div>
-                <button type="button" onClick={() => setOnboardingStep('NAME')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
+                <button type="button" onClick={() => setOnboardingStep('GENDER')} className="w-full text-[10px] text-white/30 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:text-white transition-colors">
                    <ChevronLeft size={14}/> BACK_TO_IDENTITY
                 </button>
               </div>
@@ -1008,7 +1083,7 @@ const App: React.FC = () => {
                 </div>
                 <div>
                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{agentName}</h2>
-                   <p className="text-xs font-black text-spyCyan uppercase tracking-[0.2em] mt-1">{t.rank}: {agentAge} {t.yearsSuffix}</p>
+                   <p className="text-xs font-black text-spyCyan uppercase tracking-[0.2em] mt-1">{t.agentTitle} · {agentAge} {t.yearsSuffix}</p>
                 </div>
              </div>
              <div className="space-y-4">
@@ -1019,7 +1094,7 @@ const App: React.FC = () => {
                    </div>
                    <div className="grid grid-cols-4 gap-2">
                       {(['EN', 'IT', 'FR', 'PT'] as Language[]).map(l => (
-                        <button key={l} onClick={() => setLang(l)} className={`py-3 rounded-2xl font-black text-xs transition-all border-2 ${lang === l ? 'bg-spyPink border-spyPink text-black' : 'border-white/10 text-white/40 hover:border-spyPink/50'}`}>{l}</button>
+                        <button key={l} onClick={() => handleChangeLanguage(l)} disabled={isScanning} className={`py-3 rounded-2xl font-black text-xs transition-all border-2 disabled:opacity-40 ${lang === l ? 'bg-spyPink border-spyPink text-black' : 'border-white/10 text-white/40 hover:border-spyPink/50'}`}>{l}</button>
                       ))}
                    </div>
                 </div>
