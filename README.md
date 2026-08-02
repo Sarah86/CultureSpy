@@ -22,10 +22,14 @@ CultureSpy reframes the visit as a covert operation. Each child becomes a spy ag
 
 ## Features
 
-- **Location-aware missions** — scan surroundings via GPS or search manually for any museum, gallery, or landmark
-- **AI-generated tasks** — each location gets a unique set of 10 sensory micro-tasks with a hidden curiosity fact per task
+- **Location-aware missions** — scan surroundings via GPS or search manually for any museum, gallery, or landmark, sorted nearest-to-farthest
+- **AI-generated tasks** — each location gets a unique set of sensory micro-tasks with a hidden curiosity fact per task
+- **One-task focus mode** — mission screens show a single task at a time, with a step indicator and prev/next navigation to revisit or undo a step, so kids stay on task instead of facing a full checklist at once
 - **Mission regeneration** — generate a new mission variant for the same location on demand
-- **Response caching** — generated missions are cached locally, so revisiting the same location costs zero API calls
+- **Delete missions** — remove a mission (with confirmation) from the home list or from within it
+- **Mission completion celebration** — a trophy/confetti screen on finishing the last task, with a shortcut to scan for a new target
+- **Place details on demand** — distance, category, address, and a "View on Maps" link for both the target-selection list and the generated mission
+- **Persistent state, minimal API usage** — agent profile, missions, and the last scan/search result list are all saved locally; reloading the app, revisiting a mission, or reopening the last search list costs zero extra API calls. Generated missions are cached per place + language, so picking the same target again never re-triggers the AI
 - **Age-based ranks** — Recruit (6–8), Agent (9–10), Commander (11–12)
 - **Multilingual** — English, Italian, French, Portuguese
 - **Fully offline-capable after first load**
@@ -67,10 +71,12 @@ CultureSpy/
 ├── App.tsx               # Main app UI and state management
 ├── components/           # UI Components
 │   ├── MissionCard.tsx   # Mission list card
-│   ├── TaskItem.tsx      # Individual sensory task
+│   ├── MissionComplete.tsx # Mission-finished celebration screen
+│   ├── TaskItem.tsx      # Individual sensory task (focus-mode card)
 │   ├── TerminalText.tsx  # Typewriter text effect
 │   └── LocationScanner.tsx # Scanning overlay UI
 ├── data.ts               # Local cache / fallback data
+├── storage.ts            # Typed localStorage layer (profile, missions, search results, mission cache)
 ├── types.ts              # TypeScript types
 └── index.tsx             # Entry point
 ```
@@ -79,12 +85,12 @@ CultureSpy/
 
 ## How It Works
 
-1. **Onboarding** — child picks language, creates a codename, and selects their age/rank
-2. **Radar** — app scans nearby cultural locations via GPS (or manual search)
-3. **Target selection** — 4 nearby locations are presented as "targets"
-4. **Mission generation** — Gemini generates a structured mission with 10 sensory tasks specific to that location
-5. **Mission execution** — child completes tasks, earns XP, unlocks curiosity facts
-6. **Caching** — completed mission data is stored in localStorage; same location = instant load next time
+1. **Onboarding** — child picks language, creates a codename, and selects their age/rank (skipped on return visits — the profile is remembered)
+2. **Radar** — app scans nearby cultural locations via GPS (or manual search); results are sorted nearest-to-farthest and persisted, so reopening the same list later is instant and free
+3. **Target selection** — nearby locations are presented as "targets" with distance, category, address, and a maps link
+4. **Mission generation** — Gemini generates a structured mission with sensory tasks specific to that location; the same place + language never re-triggers the AI
+5. **Mission execution** — child completes one task at a time in focus mode (with the option to step back and revisit a task), earns XP, unlocks curiosity facts
+6. **Persistence** — agent profile, mission progress, generated mission content, and the last search results are all stored locally; reloading the app never starts from scratch
 
 ---
 
@@ -113,8 +119,11 @@ Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
 **Why structured mindmap-style tasks instead of open-ended AI prompts?**
 Tasks are designed by child development and sensory engagement specialists, not generated freely by the LLM. The AI fills the content (what to look for, curiosity facts) within a fixed structure. This gives clinical safety and predictability — important when the target audience has ADHD.
 
-**Why cache missions locally?**
-The same museum visit shouldn't trigger a new API call every time. Caching keeps costs near zero and makes the app feel instant on repeat visits. Users can always regenerate a fresh variant if they want something new.
+**Why cache missions and search results locally?**
+The same museum visit — or reopening the same list of nearby spots — shouldn't trigger a new API call every time. Persisting profile, missions, mission content, and search results locally keeps costs near zero and makes the app feel instant on repeat visits and after a reload. Users can always regenerate a fresh mission variant, or start a new search, if they want something new.
+
+**Why one task at a time instead of a full checklist?**
+The target audience (including kids with ADHD) tends to lose focus faced with a long list. Showing a single task with a step indicator keeps attention on the current action, while prev/next navigation still allows revisiting and undoing a step.
 
 **Why Gemini Flash over larger models?**
 Speed matters for kids. Flash responds in under 2 seconds, keeps costs minimal, and the structured JSON output schema ensures reliable parsing without post-processing.
@@ -127,3 +136,5 @@ The initial prototype was built in Google AI Studio for rapid iteration. The app
 ## Status
 
 Live at [culture-spy.vercel.app](https://culture-spy.vercel.app).
+
+See [CHANGELOG.md](./CHANGELOG.md) for a dated history of what's changed.
