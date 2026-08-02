@@ -3,22 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Terminal, ShieldAlert, Cpu, User, ChevronLeft, Power, Globe, LocateFixed, Radar, ExternalLink, Crosshair, Target, ChevronRight, Fingerprint, Activity, Zap, Key, Star, Trophy, Rocket, Ghost, Sparkles, Flame, UserCircle, Settings, ShieldCheck, ShieldX, CheckCircle2, RefreshCw, Languages, Search, Send, Shield, Eye, Info, MapPin, Navigation, Tag, Trash2 } from 'lucide-react';
 import { getLocalizedMockMissions } from './data';
-import { Mission, Task, TaskType, SensoryType, Language, Translations } from './types';
+import { Mission, Task, TaskType, SensoryType, Language, Translations, NearbyTarget } from './types';
 import { storage } from './storage';
 import MissionCard from './components/MissionCard';
 import TaskItem from './components/TaskItem';
 import TerminalText from './components/TerminalText';
 import LocationScanner from './components/LocationScanner';
 import MissionComplete from './components/MissionComplete';
-
-interface NearbyTarget {
-  name: string;
-  type: string;
-  description: string;
-  address?: string;
-  lat?: number;
-  lng?: number;
-}
 
 const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 6371;
@@ -39,8 +30,8 @@ const sortByDistance = (targets: NearbyTarget[], origin: { lat: number; lng: num
 
 const formatDistance = (km: number): string => km < 1 ? `${Math.round(km * 1000)} M` : `${km.toFixed(1)} KM`;
 
-const getGoogleMapsUrl = (target: NearbyTarget): string => {
-  const query = [target.name, target.address].filter(Boolean).join(', ');
+const getGoogleMapsUrl = (name: string, address?: string): string => {
+  const query = [name, address].filter(Boolean).join(', ');
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
@@ -303,9 +294,11 @@ const App: React.FC = () => {
     return saved && saved.length > 0 ? saved : getLocalizedMockMissions(storage.getProfile()?.lang ?? 'EN');
   });
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
-  const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>(
-    () => storage.getProfile() ? 'HOME' : 'ONBOARDING'
-  );
+  const [view, setView] = useState<'ONBOARDING' | 'HOME' | 'SELECT_LOCATION' | 'MISSION_DETAIL' | 'SETTINGS'>(() => {
+    if (!storage.getProfile()) return 'ONBOARDING';
+    const savedSearch = storage.getSearchResults();
+    return savedSearch && savedSearch.targets.length > 0 ? 'SELECT_LOCATION' : 'HOME';
+  });
   const [agentName, setAgentName] = useState(() => storage.getProfile()?.name ?? '');
   const [tempName, setTempName] = useState('');
   const [onboardingStep, setOnboardingStep] = useState<'LANG' | 'INTRO' | 'NAME' | 'AGE'>('LANG');
@@ -313,16 +306,17 @@ const App: React.FC = () => {
   const [manualSearchInput, setManualSearchInput] = useState('');
 
   const [isScanning, setIsScanning] = useState(false);
-  const [lastTarget, setLastTarget] = useState<NearbyTarget | null>(null);
+  const [lastTarget, setLastTarget] = useState<NearbyTarget | null>(() => storage.getSearchResults()?.lastTarget ?? null);
   const [scanStatus, setScanStatus] = useState('');
   const [scanError, setScanError] = useState<string | undefined>(undefined);
-  const [detectedTargets, setDetectedTargets] = useState<NearbyTarget[]>([]);
+  const [detectedTargets, setDetectedTargets] = useState<NearbyTarget[]>(() => storage.getSearchResults()?.targets ?? []);
   const [userCoords, setUserCoords] = useState<{lat: number, lng: number} | null>(null);
-  const [searchOrigin, setSearchOrigin] = useState<{lat: number, lng: number} | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState<{lat: number, lng: number} | null>(() => storage.getSearchResults()?.origin ?? null);
   const [showKeySelection, setShowKeySelection] = useState(false);
   const [hasValidKey, setHasValidKey] = useState(false);
   const [completedMission, setCompletedMission] = useState<Mission | null>(null);
   const [missionToDelete, setMissionToDelete] = useState<Mission | null>(null);
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState<number | null>(null);
 
   const t = TRANSLATIONS[lang];
 
@@ -334,6 +328,17 @@ const App: React.FC = () => {
   useEffect(() => {
     storage.saveMissions(missions);
   }, [missions]);
+
+  // Persist the last search result list so revisiting it — or reloading mid-browse —
+  // never costs another /api/scan or /api/search call. Only a new search replaces it.
+  useEffect(() => {
+    storage.saveSearchResults({ targets: detectedTargets, origin: searchOrigin, lastTarget });
+  }, [detectedTargets, searchOrigin, lastTarget]);
+
+  // Reset step navigation whenever a different mission is opened.
+  useEffect(() => {
+    setFocusedTaskIndex(null);
+  }, [activeMissionId]);
 
   // Persist the agent's profile once onboarding is complete, and keep it in sync with language changes.
   useEffect(() => {
@@ -377,6 +382,9 @@ const App: React.FC = () => {
     setAgentAge(null);
     setMissions([]);
     setActiveMissionId(null);
+    setDetectedTargets([]);
+    setSearchOrigin(null);
+    setLastTarget(null);
     setView('ONBOARDING');
     setOnboardingStep('LANG');
   };
@@ -571,6 +579,16 @@ const App: React.FC = () => {
     setScanError(undefined);
     setScanStatus(t.status_encrypting);
 
+    const targetMeta = {
+      targetName: target.name,
+      targetAddress: target.address,
+      targetLat: target.lat,
+      targetLng: target.lng,
+      targetDistanceKm: searchOrigin && typeof target.lat === 'number' && typeof target.lng === 'number'
+        ? getDistanceKm(searchOrigin.lat, searchOrigin.lng, target.lat, target.lng)
+        : undefined
+    };
+
     try {
       // Check the mission cache first — same location + language = same mission, zero API cost
       const cacheKey = `${target.name.toLowerCase().replace(/\s+/g, '_')}_${lang}`;
@@ -578,6 +596,7 @@ const App: React.FC = () => {
       if (cachedMission) {
         const newMission: Mission = {
           ...cachedMission,
+          ...targetMeta,
           id: `gen-${Date.now()}`,
           status: 'PENDING',
           isLocked: false,
@@ -617,6 +636,7 @@ const App: React.FC = () => {
 
       const newMission: Mission = {
         ...data,
+        ...targetMeta,
         id: `gen-${Date.now()}`,
         status: 'PENDING',
         isLocked: false,
@@ -644,8 +664,16 @@ const App: React.FC = () => {
   const currentMission = activeMissionId ? missions.find(m => m.id === activeMissionId) : null;
   const completedCount = missions.reduce((acc, m) => acc + m.tasks.filter(tk => tk.completed).length, 0);
   const progressPercent = currentMission ? (currentMission.tasks.filter(tk => tk.completed).length / currentMission.tasks.length) * 100 : 0;
-  const activeTaskIndex = currentMission ? currentMission.tasks.findIndex(tk => !tk.completed) : -1;
-  const activeTask = activeTaskIndex >= 0 ? currentMission!.tasks[activeTaskIndex] : null;
+  const firstIncompleteIndex = currentMission ? currentMission.tasks.findIndex(tk => !tk.completed) : -1;
+  const defaultStepIndex = firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0;
+  const stepIndex = focusedTaskIndex !== null
+    ? Math.max(0, Math.min((currentMission?.tasks.length ?? 1) - 1, focusedTaskIndex))
+    : defaultStepIndex;
+  const viewTask = currentMission?.tasks[stepIndex] ?? null;
+  const goToStep = (i: number) => {
+    if (!currentMission) return;
+    setFocusedTaskIndex(Math.max(0, Math.min(currentMission.tasks.length - 1, i)));
+  };
 
   const getRankInfo = (age: number) => {
     if (age <= 8) return { name: t.rankRookie, color: 'spyGreen' };
@@ -941,7 +969,7 @@ const App: React.FC = () => {
                       </div>
                     )}
                     <a
-                      href={getGoogleMapsUrl(target)}
+                      href={getGoogleMapsUrl(target.name, target.address)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -1026,7 +1054,32 @@ const App: React.FC = () => {
                      <span className="text-spyGreen text-xs font-black tracking-widest">{currentMission.codeName}</span>
                   </div>
                   <h2 className="text-4xl font-black text-white uppercase mb-4 leading-[0.9] tracking-tighter">{currentMission.title}</h2>
-                  <p className="text-sm text-white/70 font-bold leading-relaxed mb-8">{currentMission.description}</p>
+                  <p className="text-sm text-white/70 font-bold leading-relaxed mb-6">{currentMission.description}</p>
+                  {(currentMission.targetAddress || typeof currentMission.targetDistanceKm === 'number') && (
+                    <div className="mb-6 pb-6 border-b-2 border-white/5 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {typeof currentMission.targetDistanceKm === 'number' && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-spyGreen bg-spyGreen/10 border border-spyGreen/20 px-3 py-1.5 rounded-full">
+                            <Navigation size={11} /> {formatDistance(currentMission.targetDistanceKm)}
+                          </span>
+                        )}
+                        <a
+                          href={getGoogleMapsUrl(currentMission.targetName ?? currentMission.title, currentMission.targetAddress)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-spyCyan bg-spyCyan/10 border-2 border-spyCyan/20 px-4 py-2 rounded-full hover:bg-spyCyan hover:text-black transition-all"
+                        >
+                          <ExternalLink size={12} /> {t.viewOnMaps}
+                        </a>
+                      </div>
+                      {currentMission.targetAddress && (
+                        <div className="flex items-start gap-2 text-xs text-white/60 font-bold">
+                          <MapPin size={14} className="flex-shrink-0 mt-0.5 text-spyCyan" />
+                          <span>{currentMission.targetAddress}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="h-6 w-full bg-white/10 rounded-full overflow-hidden border-2 border-white/5 p-1">
                     <div className="h-full bg-spyGreen rounded-full transition-all duration-700 shadow-[0_0_25px_#00ff41]" style={{ width: `${progressPercent}%` }}></div>
                   </div>
@@ -1035,28 +1088,42 @@ const App: React.FC = () => {
                      <span>{currentMission.tasks.filter(tk => tk.completed).length} / {currentMission.tasks.length} {t.secured}</span>
                   </div>
                 </div>
-                {activeTask ? (
+                {viewTask && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-center gap-2">
                       {currentMission.tasks.map((tk, i) => (
-                        <div
+                        <button
                           key={tk.id}
+                          onClick={() => goToStep(i)}
+                          aria-label={`${t.stepOf} ${i + 1}`}
                           className={`h-2.5 rounded-full transition-all ${
-                            tk.completed ? 'bg-spyGreen w-8' : i === activeTaskIndex ? 'bg-spyCyan w-10' : 'bg-white/10 w-2.5'
+                            tk.completed ? 'bg-spyGreen w-8' : i === stepIndex ? 'bg-spyCyan w-10' : 'bg-white/10 w-2.5'
                           }`}
                         />
                       ))}
                     </div>
-                    <p className="text-center text-sm font-black uppercase tracking-widest text-white/40">
-                      {t.stepOf} {activeTaskIndex + 1} / {currentMission.tasks.length}
-                    </p>
-                    <TaskItem task={activeTask} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                     {currentMission.tasks.map(tk => (
-                       <TaskItem key={tk.id} task={tk} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
-                     ))}
+                    <div className="flex items-center justify-center gap-4">
+                      <button
+                        onClick={() => goToStep(stepIndex - 1)}
+                        disabled={stepIndex === 0}
+                        aria-label="Previous step"
+                        className="p-2 rounded-full text-white/40 hover:text-spyCyan hover:bg-spyCyan/10 disabled:opacity-20 disabled:pointer-events-none transition-all"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <p className="text-center text-sm font-black uppercase tracking-widest text-white/40 w-28">
+                        {t.stepOf} {stepIndex + 1} / {currentMission.tasks.length}
+                      </p>
+                      <button
+                        onClick={() => goToStep(stepIndex + 1)}
+                        disabled={stepIndex === currentMission.tasks.length - 1}
+                        aria-label="Next step"
+                        className="p-2 rounded-full text-white/40 hover:text-spyCyan hover:bg-spyCyan/10 disabled:opacity-20 disabled:pointer-events-none transition-all"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+                    <TaskItem task={viewTask} t={t} onToggle={(tid) => toggleTask(currentMission.id, tid)} />
                   </div>
                 )}
               </div>
