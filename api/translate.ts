@@ -1,29 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
 
+interface TranslatableTask {
+  prompt: string;
+  curiosity?: string;
+}
+
+interface TranslatableMission {
+  title: string;
+  description: string;
+  tasks: TranslatableTask[];
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { targetName, agentName, agentAge, agentGender, lang } = req.body as {
-    targetName: string;
-    agentName: string;
-    agentAge: number;
-    agentGender?: 'BOY' | 'GIRL';
-    lang: string;
-  };
+  const { mission, targetLang } = req.body as { mission: TranslatableMission; targetLang: string };
 
-  if (!targetName) return res.status(400).json({ error: 'Missing targetName' });
+  if (!mission || !targetLang) return res.status(400).json({ error: 'Missing mission or targetLang' });
 
-  const langLabel = lang === 'PT' ? 'Português do Brasil' : lang;
-  const genderHint = agentGender
-    ? `\n\nThe agent is a ${agentGender === 'GIRL' ? 'girl' : 'boy'}; use pronouns and any gendered phrasing in the ${langLabel} response accordingly.`
-    : '';
-  const prompt = (process.env.AI_PROMPT_MISSION || '')
-    .replace(/\${targetName}/g, targetName)
-    .replace(/\${agentName}/g, agentName)
-    .replace(/\${agentAge}/g, agentAge.toString())
-    .replace(/\${langLabel}/g, langLabel)
-    + genderHint;
+  const langLabel = targetLang === 'PT' ? 'Português do Brasil' : targetLang;
+  const prompt = `Translate the text values in this JSON into ${langLabel}. This is content for a kids' spy-themed scavenger hunt game — keep the playful tone and meaning, just translate it. Keep the exact same JSON structure and number of tasks, only translate the string values.\n\n${JSON.stringify(mission)}`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
@@ -36,7 +33,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            codeName: { type: Type.STRING },
             title: { type: Type.STRING },
             description: { type: Type.STRING },
             tasks: {
@@ -45,27 +41,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 type: Type.OBJECT,
                 properties: {
                   prompt: { type: Type.STRING },
-                  curiosity: { type: Type.STRING, description: 'A funny/interesting secret fact related to the task.' },
-                  sensoryType: { type: Type.STRING, enum: ['sight', 'sound', 'touch', 'smell', 'vibe'] },
-                  type: { type: Type.STRING, enum: ['observation', 'deduction', 'sketch', 'audio'] }
+                  curiosity: { type: Type.STRING }
                 },
-                required: ['prompt', 'curiosity', 'sensoryType', 'type']
+                required: ['prompt']
               }
             }
           },
-          required: ['codeName', 'title', 'description', 'tasks']
+          required: ['title', 'description', 'tasks']
         }
       }
     });
 
     res.json(JSON.parse(response.text!));
   } catch (err: any) {
-    console.error('DEBUG: Mission Error:', err);
-    
+    console.error('DEBUG: Translate Error:', err);
+
     const is404 = err.message?.includes('404') || err.message?.includes('Requested entity was not found');
     const is429 = err.message?.includes('429') || err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('quota');
     const status = is404 ? 404 : (is429 ? 429 : 500);
-    
+
     res.status(status).json({ error: err.message });
   }
 }

@@ -8,11 +8,9 @@ export interface Translations {
   enterCodename: string;
   confirmIdentity: string;
   welcome: string;
-  selectRank: string;
+  selectAge: string;
   yearsSuffix: string;
-  rankRookie: string;
-  rankSpecialist: string;
-  rankElite: string;
+  agentTitle: string;
   stealthOn: string;
   xp: string;
   radarTitle: string;
@@ -28,7 +26,6 @@ export interface Translations {
   intelCaptured: string;
   secured: string;
   settingsTitle: string;
-  rank: string;
   satelliteLink: string;
   satelliteDesc: string;
   updateKey: string;
@@ -47,6 +44,7 @@ export interface Translations {
   status_searching: string;
   status_connecting: string;
   status_encrypting: string;
+  status_translating: string;
   error_radar: string;
   error_gps: string;
   apiError: string;
@@ -61,6 +59,9 @@ export interface Translations {
   cancel: string;
   stepOf: string;
   viewLastResults: string;
+  selectGender: string;
+  genderBoy: string;
+  genderGirl: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
@@ -103,10 +104,13 @@ export interface Mission {
   targetDistanceKm?: number;
 }
 
+export type AgentGender = 'BOY' | 'GIRL';
+
 export interface AgentProfile {
   name: string;
   age: number;
   lang: Language;
+  gender: AgentGender;
 }
 
 export interface NearbyTarget {
