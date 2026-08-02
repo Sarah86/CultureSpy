@@ -60,6 +60,7 @@ export interface Translations {
   confirmDeleteBody: string;
   cancel: string;
   stepOf: string;
+  viewLastResults: string;
 }
 
 export type TaskType = 'observation' | 'deduction' | 'sketch' | 'audio';
